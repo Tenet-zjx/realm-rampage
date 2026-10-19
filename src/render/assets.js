@@ -6,7 +6,7 @@ import { prepareCharacterMaterials } from './character-material.js';
 
 const BASE = `${import.meta.env?.BASE_URL ?? '/'}assets/models/`;
 
-export function createAssetLibrary({ onProgress } = {}) {
+export function createAssetLibrary(opts = {}) {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const cache = new Map();
@@ -17,12 +17,12 @@ export function createAssetLibrary({ onProgress } = {}) {
   const fetchGltf = (file) => {
     if (!cache.has(file)) {
       total++;
-      cache.set(file, loader.loadAsync(BASE + file).then((g) => { loaded++; onProgress?.(loaded, total, file); return g; }));
+      cache.set(file, loader.loadAsync(BASE + file).then((g) => { loaded++; (api.onProgress || opts.onProgress)?.(loaded, total, file); return g; }));
     }
     return cache.get(file);
   };
 
-  return {
+  const api = {
     async init() {
       manifest = await (await fetch(BASE + 'manifest.json')).json();
       const anims = await fetchGltf(manifest.assets.anims.file);
@@ -51,4 +51,5 @@ export function createAssetLibrary({ onProgress } = {}) {
       return { root, materials, clips: ownClips ? new Map(ownClips.map((c) => [c.name, c])) : clips };
     },
   };
+  return api;
 }
