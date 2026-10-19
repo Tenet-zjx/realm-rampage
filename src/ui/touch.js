@@ -24,14 +24,15 @@ export function createTouch(root, input) {
     b.addEventListener('touchend', up); b.addEventListener('touchcancel', up);
   });
   function layout() {
-    const W = window.innerWidth, H = window.innerHeight, br = 24, bb = 24;
+    const W = window.innerWidth, H = window.innerHeight, k = Math.min(1, Math.max(0.62, (H - 40) / 330)), br = 18, bb = 14;
+    el.querySelectorAll('.tb').forEach((b) => { b.style.transform = `scale(${k})`; b.style.transformOrigin = 'top left'; });
     const place = (sel, x, y) => { const n = el.querySelector(sel); n.style.left = `${x}px`; n.style.top = `${y}px`; };
-    const ax = W - br - 86, ay = H - bb - 86;
+    const ax = W - br - 86 * k, ay = H - bb - 86 * k;
     place('[data-a=light]', ax, ay);
-    place('[data-a=heavy]', ax - 72, ay + 30); place('[data-a=dodge]', ax + 14, ay - 70); place('[data-a=musou]', ax - 72, ay - 50);
-    const sk = el.querySelectorAll('.sk'); const pos = [[-150, 40], [-140, -30], [-100, -96], [-30, -140]];
-    sk.forEach((b, i) => { b.style.left = `${ax + pos[i][0]}px`; b.style.top = `${ay + pos[i][1]}px`; });
-    place('[data-a=item0]', ax + 30, ay - 136); place('[data-a=belt0]', ax - 160, ay - 120);
+    place('[data-a=heavy]', ax - 74 * k, ay + 28 * k); place('[data-a=dodge]', ax + 14 * k, ay - 70 * k); place('[data-a=musou]', ax - 74 * k, ay - 46 * k);
+    const sk = el.querySelectorAll('.sk'); const pos = [[-150, 44], [-142, -24], [-108, -88], [-44, -128]];
+    sk.forEach((b, i) => { b.style.left = `${ax + pos[i][0] * k}px`; b.style.top = `${ay + pos[i][1] * k}px`; });
+    place('[data-a=item0]', ax + 34 * k, ay - 128 * k); place('[data-a=belt0]', ax - 196 * k, ay - 40 * k);
   }
   layout(); window.addEventListener('resize', layout);
   return {

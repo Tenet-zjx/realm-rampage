@@ -90,9 +90,9 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
           if (big) { vfx.shock(ev.x, 0.3, ev.z, 4, pal2('holy'), 0.5); vfx.flash(ev.x, 1.5, ev.z, pal2('holy'), 40, 0.3, 12); }
           break;
         }
-        case 'shake': cam.trauma = Math.min(1.2, cam.trauma + ev.a * 0.55); break;
+        case 'shake': cam.trauma = Math.min(1.2, cam.trauma + ev.a * 0.55 * api.shake); break;
         case 'hitstop': if (ev.t > 0.08) cam.fovKick = Math.max(cam.fovKick, ev.t * 18); break;
-        case 'playerHit': cam.trauma = Math.min(1, cam.trauma + Math.min(0.4, ev.amount / Math.max(1, game.stats.maxHp) * 3)); break;
+        case 'playerHit': cam.trauma = Math.min(1, cam.trauma + Math.min(0.4, ev.amount / Math.max(1, game.stats.maxHp) * 3) * api.shake); break;
         case 'levelup': vfx.pillar(p.x, p.z, 1.3, 9, pal2('holy'), 0.8); vfx.burst(p.x, 1, p.z, pal2('holy'), { count: 40, speed: 5, up: 7, shape: 4, size: 0.45 }); vfx.shock(p.x, 0.3, p.z, 5, pal2('holy'), 0.6); break;
         case 'musou': if (ev.phase === 'start') { cam.targetZoom = 0.72; cam.fovKick = 6; vfx.shock(p.x, 0.4, p.z, 8, pal2(ev.palette), 0.7, 2); vfx.flash(p.x, 2, p.z, pal2(ev.palette), 80, 0.5, 20); } else if (ev.phase === 'finish') { cam.fovKick = 10; } else if (ev.phase === 'end') cam.targetZoom = 1; break;
         case 'heal': if (ev.amount > 5) vfx.burst(p.x, 0.5, p.z, pal2('nature'), { count: 8, speed: 1.5, up: 3, shape: 4, size: 0.35, gravity: -1 }); break;
@@ -168,7 +168,8 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
   }
 
   let lastBiomeKey = '';
-  return {
+  const api = {
+    shake: 1,
     renderer, scene, camera, vfx, crowd, units, numbers, arena,
     async prepare(game, models) {
       await arena.setBiome(game);
@@ -209,4 +210,5 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
     get pixelRatio() { return pixelRatio; },
     stats() { return { ...vfx.stats(), pixelRatio, frameMs: Math.round(frameAvg * 10) / 10, programs: renderer.info.programs?.length, geometries: renderer.info.memory.geometries }; },
   };
+  return api;
 }

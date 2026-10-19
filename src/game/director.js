@@ -222,7 +222,7 @@ function updateObjective(game, dt) {
       const c = st.crystal;
       st.progress = game.stageTime / o.time;
       game.grid.query(c.x, c.z, 3.4, (e) => { if (!e.dying && e.team === 'enemy' && e.state === 'attack' && e.stateT < dt * 1.5) { c.hp -= e.dmg * 0.25; c.hitT = 0.2; } });
-      if (c.hp <= 0) { emit(game, { type: 'banner', text: '水晶被摧毁', sub: '守护失败', style: 'danger' }); game.fail('crystal'); }
+      if (c.hp <= 0 && st.progress < 1) { emit(game, { type: 'banner', text: '水晶被摧毁', sub: '守护失败', style: 'danger' }); game.fail('crystal'); }
       break;
     }
     case 'survive': st.progress = game.stageTime / o.time; break;
@@ -236,7 +236,7 @@ function updateObjective(game, dt) {
     case 'boss': { const b = game.bosses; st.progress = game.bossesKilled ? 1 : b.length ? 1 - b.reduce((s, x) => s + Math.max(0, x.hp), 0) / b.reduce((s, x) => s + x.maxHp, 0) : 0; if (game.stageTime > 4 && !b.length && game.bossesKilled) st.progress = 1; break; }
     default: break;
   }
-  if (st.progress >= 1 && !st.cleared) clearStage(game);
+  if (st.progress >= 1 && !st.cleared && !game.endAt) clearStage(game);
 }
 
 export function clearStage(game) {

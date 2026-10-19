@@ -10,7 +10,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--body-font); -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; touch-action: none; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-#ui { position: fixed; inset: 0; pointer-events: none; }
+#ui { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
 #ui > * { pointer-events: auto; }
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
 .hidden { display: none !important; }
@@ -290,6 +290,31 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
   .banner .t { font-size: 34px; letter-spacing: 4px; } .musou-name { font-size: 40px; }
   .card { width: 210px; min-height: 280px; } .card .name { font-size: 20px; } .card .desc { font-size: 13px; }
   .hero-stage { grid-template-columns: 1fr; } .talent-board { grid-template-columns: repeat(2, 1fr); }
-  .shop { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; } .shop header { grid-column: 1; }
+  .shop { grid-template-columns: 1fr 260px; }
   .hud-bottom.touchmode { display: none; }
+}
+
+@media (max-height: 520px) {
+  .hero-card { min-width: 200px; padding: 4px 8px 4px 4px; } .hero-portrait { width: 36px; height: 36px; font-size: 18px; }
+  .bar { height: 11px; } .musou { height: 12px; } .bar > span { font-size: 9px; }
+  #minimap { width: 78px; height: 78px; }
+  .gold-chip { display: none; }
+  .ko-counter { padding: 3px 8px; } .ko-counter .ko { font-size: 22px; } .ko-counter .sub { font-size: 10px; }
+  .hud-buttons { right: calc(150px + var(--safe-r)); } .hud-buttons .btn { padding: 4px 8px; font-size: 12px; }
+  .objective { padding: 3px 10px; font-size: 12px; } .objective .prog { width: 100px; }
+  .boss-bar { width: min(420px, 60vw); padding: 3px 8px 4px; } .boss-bar .name { font-size: 14px; }
+  .factions { top: 64px; } .fchip { font-size: 10px; padding: 1px 6px 1px 2px; } .buffs { top: 50px; }
+  .combo { top: 30%; right: calc(130px + var(--safe-r)); } .combo .n { font-size: 36px; } .combo .label { font-size: 13px; }
+  .banner .t { font-size: 28px; letter-spacing: 4px; } .banner .s { font-size: 13px; } .multikill { font-size: 28px; } .musou-name { font-size: 32px; letter-spacing: 6px; }
+  .overlay { padding: 8px; } .overlay h2 { font-size: 22px; letter-spacing: 3px; } .overlay .sub { font-size: 12px; margin-bottom: 6px; }
+  .cards { gap: 10px; } .card { width: 190px; min-height: 230px; padding: 10px; gap: 6px; } .card .name { font-size: 18px; } .card .desc { font-size: 12px; line-height: 1.4; } .card .icon.lg { width: 50px; height: 50px; font-size: 26px; } .card .head { margin-top: 18px; }
+  .shop { width: 98vw; height: 96vh; padding: 8px; gap: 8px; grid-template-columns: 1fr 250px; }
+  .shop header { gap: 8px; } .shop header h2 { font-size: 18px; white-space: nowrap; } .tab { padding: 3px 9px; font-size: 12px; }
+  .grid-items { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 5px; } .gitem { padding: 4px; gap: 5px; } .gitem .nm { font-size: 12px; } .gitem .pr { font-size: 11px; }
+  .detail { gap: 6px; font-size: 12px; } .detail .icon.lg { width: 46px; height: 46px; font-size: 24px; } .detail .nm { font-size: 16px; } .tree { font-size: 11px; padding: 4px; }
+  .dialog { padding: 12px; gap: 8px; } .dialog .glyph { font-size: 34px; }
+  .map { padding: 10px; gap: 6px; } .map-board { height: 58vh; } .mnode { width: 40px; height: 40px; font-size: 16px; } .mnode small { top: 40px; font-size: 10px; }
+  .wizard h2 { font-size: 24px; } .choice { width: 160px; padding: 10px; } .choice .big { font-size: 28px; } .choice .ds { font-size: 11px; }
+  .camp { padding: 10px; } .results { padding: 14px; gap: 8px; } .results .big { font-size: 34px; }
+  .logo .cn { font-size: 54px; } .menu .btn { padding: 9px; font-size: 15px; } .menu-footer { display: none; }
 }

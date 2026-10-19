@@ -1,6 +1,6 @@
 {
   "name": "realm-rampage",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "幻域无双 · Realm Rampage —— 3D 奇幻无双割草肉鸽（Three.js + Vite）",
   "license": "MIT",

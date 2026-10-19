@@ -19,6 +19,12 @@ npm run models:build   # headless Blender: process sources -> public/assets/mode
 ./scripts/public-preview.sh start|stop|status|update   # LaunchAgents: vite preview :4180 + cpolar wildwoodguardiansgame
 ```
 
+## Dev tooling
+- `window.__realmApi` (dev only): `startRun(sel)`, `game`, `renderer`, `actions`, `profile`, `input`.
+- Visual QA scripts (need `npm run dev`): `node scripts/play.mjs <mode> <hero> <secs> <outPrefix>`, `node scripts/vfxcheck.mjs <out> <skillIds> [hero] [bossId]`, `node scripts/uicheck.mjs <out> [w h]`, `node scripts/objcheck.mjs <out>`, `node scripts/shot.mjs <url> <png>`; `npm run bench` writes docs/verification/benchmark.json. All use local Chrome via Playwright.
+- `/viewer.html?ids=knight,skel_minion&clip=Idle` (dev only) previews models.
+- npm cache: use `npm_config_cache=$TMPDIR/realm-npm-cache` (the default ~/.npm cache is root-owned here).
+
 ## Conventions
 - Simulation (`src/game/`) is pure data + logic, no THREE/DOM, seeded RNG; presentation reads `game.events` each frame.
 - Data tables in `src/game/content/` are the single source of truth for heroes, skills, factions, items, enemies, stages.

@@ -263,7 +263,7 @@ def select_only(objs):
     for o in objs: o.select_set(True)
     bpy.context.view_layer.objects.active = objs[0]
 
-def export_glb(path, objs, animations=False, skins=True, meshopt=True):
+def export_glb(path, objs, animations=False, skins=True, meshopt=True, frame_step=1):
     path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
     select_only(objs)
     kw = dict(filepath=str(path), export_format='GLB', use_selection=True, export_yup=True, export_apply=False,
@@ -271,6 +271,6 @@ def export_glb(path, objs, animations=False, skins=True, meshopt=True):
               export_image_format='AUTO', export_materials='EXPORT', export_cameras=False, export_lights=False, export_extras=False,
               export_meshopt_compression_enable=meshopt)
     if animations:
-        kw.update(export_animation_mode='ACTIONS', export_force_sampling=True, export_optimize_animation_size=True, export_reset_pose_bones=True, export_anim_slide_to_zero=True)
+        kw.update(export_animation_mode='ACTIONS', export_force_sampling=True, export_frame_step=frame_step, export_optimize_animation_size=True, export_reset_pose_bones=True, export_anim_slide_to_zero=True)
     bpy.ops.export_scene.gltf(**kw)
     return path

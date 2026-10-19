@@ -57,7 +57,7 @@ const overlays = createOverlays(ui, {
 const menus = createMenus(ui, {
   profile: () => profile, save, toast: (t) => toastAnywhere(t), sfx: (k) => audio.play(k),
   startRun: (sel) => startRun(sel),
-  applySettings: () => { audio.setVolumes(profile.settings); if (renderer) renderer.numbers.enabled = profile.settings.numbers; input.useMouseAim = profile.settings.aimAssist; },
+  applySettings: () => { audio.setVolumes(profile.settings); if (renderer) { renderer.numbers.enabled = profile.settings.numbers; renderer.shake = profile.settings.shake; } input.useMouseAim = profile.settings.aimAssist; },
   resetProfile: () => { profile = resetProfile(); save(); },
   skinNames: (heroId) => (assets.manifest?.assets[HERO[heroId].model]?.skins || [{ name: '默认' }]).map((s) => s.name),
 });
@@ -84,6 +84,7 @@ async function ensureRenderer() {
   if (renderer) return renderer;
   renderer = createRenderer(canvas, assets, { quality: autoQuality() });
   renderer.numbers.enabled = profile.settings.numbers;
+  renderer.shake = profile.settings.shake;
   input.useMouseAim = profile.settings.aimAssist;
   return renderer;
 }
@@ -180,6 +181,7 @@ function stepGame(dt, rawMs) {
   renderer.frame(g, g.status === 'playing' ? dt : 0.0001, rawMs);
   hud.update(g, dt);
   touch?.update(g);
+  touch?.setVisible(g.status === 'playing');
   // status -> overlay
   const want = { draft: 'draft', shop: 'shop', shopNode: 'shop', map: 'map', event: 'event', eventDone: 'eventDone', rest: 'rest', treasure: 'treasure', paused: 'pause' }[g.status];
   if (want && overlays.kind !== want) {

@@ -96,7 +96,7 @@ export function createEntities(scene, vfx) {
       let last = null;
       for (let i = 0; i < TRAIL; i++) {
         const h = hist[i] || last;
-        const a = hist[i] ? Math.pow(1 - i / TRAIL, 1.6) * 0.9 : 0;
+        const a = hist[i] && hist[Math.max(0, i - 1)] ? Math.pow(1 - i / TRAIL, 2) * 0.55 : 0;
         if (h) { tPos.set(h.slice(0, 3), i * 6); tPos.set(h.slice(3, 6), i * 6 + 3); last = h; }
         tAlpha[i * 2] = a * 0.2; tAlpha[i * 2 + 1] = a;
       }

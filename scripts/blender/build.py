@@ -21,15 +21,14 @@ CHAR = {'Knight': ADV / 'Characters/gltf/Knight.glb', 'Barbarian': ADV / 'Charac
 ITEM = lambda n: (SKL / f'Assets/gltf/Skeleton_{n}.gltf') if not n.islower() else (ADV / f'Assets/gltf/{n}.gltf')
 
 # Clips kept in the shared animation library (all KayKit characters share one 41-bone rig).
-CLIPS = ['Idle', 'Idle_B', 'Idle_Combat', '2H_Melee_Idle', 'Unarmed_Idle', 'Walking_A', 'Walking_B', 'Walking_D_Skeletons', 'Running_A', 'Running_B', 'Running_C',
-         'Dodge_Forward', 'Dodge_Backward', 'Dodge_Left', 'Dodge_Right',
+CLIPS = ['Idle', 'Idle_B', 'Idle_Combat', '2H_Melee_Idle', 'Walking_A', 'Walking_B', 'Walking_D_Skeletons', 'Running_A', 'Running_B', 'Running_C',
+         'Dodge_Forward', 'Dodge_Backward',
          '1H_Melee_Attack_Chop', '1H_Melee_Attack_Jump_Chop', '1H_Melee_Attack_Slice_Diagonal', '1H_Melee_Attack_Slice_Horizontal', '1H_Melee_Attack_Stab',
          '2H_Melee_Attack_Chop', '2H_Melee_Attack_Slice', '2H_Melee_Attack_Spin', '2H_Melee_Attack_Spinning', '2H_Melee_Attack_Stab',
-         'Dualwield_Melee_Attack_Chop', 'Dualwield_Melee_Attack_Slice', 'Dualwield_Melee_Attack_Stab', 'Unarmed_Melee_Attack_Kick', 'Unarmed_Melee_Attack_Punch_A',
-         '1H_Ranged_Shoot', '1H_Ranged_Aiming', '2H_Ranged_Shoot', 'Spellcast_Shoot', 'Spellcast_Long', 'Spellcast_Raise', 'Spellcast_Summon', 'Spellcasting', 'Throw',
-         'Block', 'Block_Hit', 'Blocking', 'Hit_A', 'Hit_B', 'Death_A', 'Death_B', 'Death_C_Skeletons', 'Cheer', 'Taunt', 'Taunt_Longer',
-         'Jump_Full_Short', 'Jump_Start', 'Jump_Idle', 'Jump_Land', 'Use_Item', 'Interact', 'PickUp',
-         'Skeletons_Awaken_Floor', 'Skeletons_Awaken_Floor_Long', 'Spawn_Ground_Skeletons', 'Spawn_Air', 'Sit_Floor_Idle', 'Lie_StandUp']
+         'Dualwield_Melee_Attack_Chop', 'Dualwield_Melee_Attack_Slice', 'Dualwield_Melee_Attack_Stab', 'Unarmed_Melee_Attack_Kick',
+         '1H_Ranged_Shoot', '1H_Ranged_Aiming', 'Spellcast_Shoot', 'Spellcast_Long', 'Spellcast_Raise', 'Spellcast_Summon', 'Spellcasting', 'Throw',
+         'Block', 'Blocking', 'Hit_A', 'Hit_B', 'Death_A', 'Death_B', 'Death_C_Skeletons', 'Cheer', 'Taunt',
+         'Jump_Full_Short', 'Jump_Idle', 'Skeletons_Awaken_Floor']
 
 WHITE = (1, 1, 1)
 # ---- recolour presets ----
@@ -199,7 +198,7 @@ def build_anims():
         else: a.use_fake_user = True
     missing = keep - {a.name for a in bpy.data.actions}
     if missing: print('MISSING CLIPS', missing)
-    path = export_glb(OUT / 'anims.glb', [arm], animations=True, skins=False)
+    path = export_glb(OUT / 'anims.glb', [arm], animations=True, skins=False, frame_step=2)
     return path, {'clips': sorted(a.name for a in bpy.data.actions)}
 
 PROPS = ['wall', 'wall_arched', 'wall_broken', 'wall_corner', 'wall_cracked', 'wall_doorway', 'wall_half', 'wall_pillar', 'wall_gated',

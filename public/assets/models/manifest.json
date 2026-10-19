@@ -2,8 +2,8 @@
  "assets": {
   "anims": {
    "file": "anims.glb",
-   "bytes": 2403632,
-   "sha256": "b6fb4baed94792a4fa025967aa7e5891018e327bcdc9727790dcff9c3bd78a04",
+   "bytes": 1756864,
+   "sha256": "2b7d8ca0a33d7056e7dd9324b37ca5674b891d85da3d9d971c4a0e2cb65e30ea",
    "clips": [
     "1H_Melee_Attack_Chop",
     "1H_Melee_Attack_Jump_Chop",
@@ -18,9 +18,7 @@
     "2H_Melee_Attack_Spinning",
     "2H_Melee_Attack_Stab",
     "2H_Melee_Idle",
-    "2H_Ranged_Shoot",
     "Block",
-    "Block_Hit",
     "Blocking",
     "Cheer",
     "Death_A",
@@ -28,8 +26,6 @@
     "Death_C_Skeletons",
     "Dodge_Backward",
     "Dodge_Forward",
-    "Dodge_Left",
-    "Dodge_Right",
     "Dualwield_Melee_Attack_Chop",
     "Dualwield_Melee_Attack_Slice",
     "Dualwield_Melee_Attack_Stab",
@@ -38,33 +34,20 @@
     "Idle",
     "Idle_B",
     "Idle_Combat",
-    "Interact",
     "Jump_Full_Short",
     "Jump_Idle",
-    "Jump_Land",
-    "Jump_Start",
-    "Lie_StandUp",
-    "PickUp",
     "Running_A",
     "Running_B",
     "Running_C",
-    "Sit_Floor_Idle",
     "Skeletons_Awaken_Floor",
-    "Skeletons_Awaken_Floor_Long",
-    "Spawn_Air",
-    "Spawn_Ground_Skeletons",
     "Spellcast_Long",
     "Spellcast_Raise",
     "Spellcast_Shoot",
     "Spellcast_Summon",
     "Spellcasting",
     "Taunt",
-    "Taunt_Longer",
     "Throw",
-    "Unarmed_Idle",
     "Unarmed_Melee_Attack_Kick",
-    "Unarmed_Melee_Attack_Punch_A",
-    "Use_Item",
     "Walking_A",
     "Walking_B",
     "Walking_D_Skeletons"
@@ -458,5 +441,5 @@
    ]
   }
  },
- "generated": "2026-10-19T19:53:16"
+ "generated": "2026-10-19T21:30:24"
 }
