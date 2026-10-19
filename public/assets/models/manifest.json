@@ -1,0 +1,462 @@
+{
+ "assets": {
+  "anims": {
+   "file": "anims.glb",
+   "bytes": 2403632,
+   "sha256": "b6fb4baed94792a4fa025967aa7e5891018e327bcdc9727790dcff9c3bd78a04",
+   "clips": [
+    "1H_Melee_Attack_Chop",
+    "1H_Melee_Attack_Jump_Chop",
+    "1H_Melee_Attack_Slice_Diagonal",
+    "1H_Melee_Attack_Slice_Horizontal",
+    "1H_Melee_Attack_Stab",
+    "1H_Ranged_Aiming",
+    "1H_Ranged_Shoot",
+    "2H_Melee_Attack_Chop",
+    "2H_Melee_Attack_Slice",
+    "2H_Melee_Attack_Spin",
+    "2H_Melee_Attack_Spinning",
+    "2H_Melee_Attack_Stab",
+    "2H_Melee_Idle",
+    "2H_Ranged_Shoot",
+    "Block",
+    "Block_Hit",
+    "Blocking",
+    "Cheer",
+    "Death_A",
+    "Death_B",
+    "Death_C_Skeletons",
+    "Dodge_Backward",
+    "Dodge_Forward",
+    "Dodge_Left",
+    "Dodge_Right",
+    "Dualwield_Melee_Attack_Chop",
+    "Dualwield_Melee_Attack_Slice",
+    "Dualwield_Melee_Attack_Stab",
+    "Hit_A",
+    "Hit_B",
+    "Idle",
+    "Idle_B",
+    "Idle_Combat",
+    "Interact",
+    "Jump_Full_Short",
+    "Jump_Idle",
+    "Jump_Land",
+    "Jump_Start",
+    "Lie_StandUp",
+    "PickUp",
+    "Running_A",
+    "Running_B",
+    "Running_C",
+    "Sit_Floor_Idle",
+    "Skeletons_Awaken_Floor",
+    "Skeletons_Awaken_Floor_Long",
+    "Spawn_Air",
+    "Spawn_Ground_Skeletons",
+    "Spellcast_Long",
+    "Spellcast_Raise",
+    "Spellcast_Shoot",
+    "Spellcast_Summon",
+    "Spellcasting",
+    "Taunt",
+    "Taunt_Longer",
+    "Throw",
+    "Unarmed_Idle",
+    "Unarmed_Melee_Attack_Kick",
+    "Unarmed_Melee_Attack_Punch_A",
+    "Use_Item",
+    "Walking_A",
+    "Walking_B",
+    "Walking_D_Skeletons"
+   ]
+  },
+  "props": {
+   "file": "props.glb",
+   "bytes": 777784,
+   "sha256": "7172139f560993da8893f0b62473b3617445067355d90461302b1c0d6916f7db",
+   "props": [
+    "wall",
+    "wall_arched",
+    "wall_broken",
+    "wall_corner",
+    "wall_cracked",
+    "wall_doorway",
+    "wall_half",
+    "wall_pillar",
+    "wall_gated",
+    "pillar",
+    "pillar_decorated",
+    "column",
+    "barrier",
+    "barrier_column",
+    "barrier_corner",
+    "barrier_half",
+    "rubble_half",
+    "rubble_large",
+    "barrel_large",
+    "barrel_large_decorated",
+    "barrel_small",
+    "barrel_small_stack",
+    "box_large",
+    "box_small",
+    "crates_stacked",
+    "chest",
+    "chest_gold",
+    "coin",
+    "coin_stack_small",
+    "coin_stack_large",
+    "torch_lit",
+    "torch_mounted",
+    "candle_triple",
+    "floor_tile_large",
+    "floor_tile_large_rocks",
+    "floor_tile_small_broken_A",
+    "floor_dirt_large",
+    "floor_dirt_large_rocky",
+    "floor_tile_big_spikes",
+    "sword_shield_broken",
+    "keg",
+    "table_long_broken",
+    "trunk_large_A",
+    "banner_patternA_red",
+    "banner_patternA_blue",
+    "banner_shield_red",
+    "banner_shield_green",
+    "banner_thin_blue"
+   ]
+  },
+  "knight": {
+   "file": "heroes/knight.glb",
+   "bytes": 166668,
+   "sha256": "61297a86a574127d87434b122e764d4815a8b6418f2baacc78ad55696aa8862a",
+   "triangles": 4710,
+   "skins": [
+    {
+     "name": "圣誓",
+     "file": null
+    },
+    {
+     "name": "暗夜",
+     "file": "heroes/skins/knight_1.png"
+    },
+    {
+     "name": "辉金",
+     "file": "heroes/skins/knight_2.png"
+    }
+   ]
+  },
+  "necromancer": {
+   "file": "heroes/necromancer.glb",
+   "bytes": 259952,
+   "sha256": "ebdd13d9ae4d3ab503b62a148d6c8d4166ece44ef726698cc94d8f3512dba30c",
+   "triangles": 6451,
+   "skins": [
+    {
+     "name": "亡骨",
+     "file": null
+    },
+    {
+     "name": "血契",
+     "file": "heroes/skins/necromancer_1.png"
+    },
+    {
+     "name": "幽冥",
+     "file": "heroes/skins/necromancer_2.png"
+    }
+   ]
+  },
+  "skel_minion": {
+   "file": "enemies/skel_minion.glb",
+   "bytes": 193356,
+   "sha256": "95451db59bc40c7f32bf9d65dbec9e769f4b683498f53b39347495569270c556",
+   "triangles": 5745
+  },
+  "boss_fallen_seraph": {
+   "file": "bosses/boss_fallen_seraph.glb",
+   "bytes": 217096,
+   "sha256": "f5c1063768e95973d94e24d5f3dfe01423d62aa13cde593ac7218e01f030052c",
+   "triangles": 5461
+  },
+  "barbarian": {
+   "file": "heroes/barbarian.glb",
+   "bytes": 157616,
+   "sha256": "6866d564650e454ef0ba19626d190976992161f7e7dd13efd9645f949a1288ff",
+   "triangles": 4553,
+   "skins": [
+    {
+     "name": "狂战",
+     "file": null
+    },
+    {
+     "name": "冰原",
+     "file": "heroes/skins/barbarian_1.png"
+    },
+    {
+     "name": "血怒",
+     "file": "heroes/skins/barbarian_2.png"
+    }
+   ]
+  },
+  "mage": {
+   "file": "heroes/mage.glb",
+   "bytes": 165940,
+   "sha256": "34c7ebcc32e8619120f87c75f3018c2ec98da694d95e50f1d5f5ec2f931f4a08",
+   "triangles": 4761,
+   "skins": [
+    {
+     "name": "星辉",
+     "file": null
+    },
+    {
+     "name": "烈焰",
+     "file": "heroes/skins/mage_1.png"
+    },
+    {
+     "name": "翠林",
+     "file": "heroes/skins/mage_2.png"
+    }
+   ]
+  },
+  "rogue": {
+   "file": "heroes/rogue.glb",
+   "bytes": 157420,
+   "sha256": "5d9726b23bfd30b088be8523ebd63a9d7263e8cf3606bc22382a04df20193599",
+   "triangles": 4607,
+   "skins": [
+    {
+     "name": "影刃",
+     "file": null
+    },
+    {
+     "name": "赤蝎",
+     "file": "heroes/skins/rogue_1.png"
+    },
+    {
+     "name": "霜刃",
+     "file": "heroes/skins/rogue_2.png"
+    }
+   ]
+  },
+  "assassin": {
+   "file": "heroes/assassin.glb",
+   "bytes": 161036,
+   "sha256": "02dec27a2733d5b98a5fcbf7819584650247cd945e06276856c10d47e8c36d48",
+   "triangles": 4677,
+   "skins": [
+    {
+     "name": "夜行",
+     "file": null
+    },
+    {
+     "name": "紫魇",
+     "file": "heroes/skins/assassin_1.png"
+    },
+    {
+     "name": "白鸦",
+     "file": "heroes/skins/assassin_2.png"
+    }
+   ]
+  },
+  "skel_warrior": {
+   "file": "enemies/skel_warrior.glb",
+   "bytes": 220396,
+   "sha256": "78388428e2ef2e6a242dd1979be09193dff7fc3d7155a6f27536eee67ce8b410",
+   "triangles": 6138
+  },
+  "skel_archer": {
+   "file": "enemies/skel_archer.glb",
+   "bytes": 202932,
+   "sha256": "301080b2bb493f1d481fc7d336d8672383039a29c885bcceb3433c8f0d711070",
+   "triangles": 5288
+  },
+  "skel_mage": {
+   "file": "enemies/skel_mage.glb",
+   "bytes": 200004,
+   "sha256": "904ac82c377102569e7970431a9c1d5095035729afc58b2dec6d6b42f8b88558",
+   "triangles": 5939
+  },
+  "blood_berserker": {
+   "file": "enemies/blood_berserker.glb",
+   "bytes": 249016,
+   "sha256": "ed8ba25c71c3012ed724a7796db41a60610a35459c3102a152583d1ab7c6bc84",
+   "triangles": 6296
+  },
+  "frost_wizard": {
+   "file": "enemies/frost_wizard.glb",
+   "bytes": 225244,
+   "sha256": "1021b5de8970dbc2ba825d1861ab39cba9d1db1566d58b6f7411cd5627b57c07",
+   "triangles": 5993
+  },
+  "hellfire_skull": {
+   "file": "enemies/hellfire_skull.glb",
+   "bytes": 204220,
+   "sha256": "4370e5dca69a48fce39fde20f312ae4d275f9914494356039ea5694c3c13ac0e",
+   "triangles": 5448
+  },
+  "bone_shieldguard": {
+   "file": "enemies/bone_shieldguard.glb",
+   "bytes": 255536,
+   "sha256": "c11cdbaf94ded057eb05bf7404ea344793f1f0686f2809ae305f07edb1db9ca5",
+   "triangles": 6403
+  },
+  "bone_giant": {
+   "file": "enemies/bone_giant.glb",
+   "bytes": 233904,
+   "sha256": "c31d1eb5da0ce7dd3edad81651840511de383f4c5e7ae7eac3001bdd6b7ef334",
+   "triangles": 5810
+  },
+  "shadow_stalker": {
+   "file": "enemies/shadow_stalker.glb",
+   "bytes": 228072,
+   "sha256": "67c4e2acecbcb54294e99c16f85f67a6acf35dc0703ff3e878f63299d7bf9691",
+   "triangles": 5618
+  },
+  "ember_archer": {
+   "file": "enemies/ember_archer.glb",
+   "bytes": 221864,
+   "sha256": "c6607dafd7808c550806c415ebb92da86ece7f814555eebe29c5859361172466",
+   "triangles": 5296
+  },
+  "plague_shaman": {
+   "file": "enemies/plague_shaman.glb",
+   "bytes": 226048,
+   "sha256": "5821effa504da2277480cb71879dbd12be399f93d588746850829cc5996bbf10",
+   "triangles": 6063
+  },
+  "bone_standard": {
+   "file": "enemies/bone_standard.glb",
+   "bytes": 221028,
+   "sha256": "77e3c0cb7c1a8e75d5e387af0303c4348f24754ec9624375f557260f7fe6e059",
+   "triangles": 5857
+  },
+  "boss_bone_colossus": {
+   "file": "bosses/boss_bone_colossus.glb",
+   "bytes": 267360,
+   "sha256": "862af0df0a951b3e672b978b3dc24baadb029a25755ae82c086d70d95182f654",
+   "triangles": 6628
+  },
+  "boss_frost_lich": {
+   "file": "bosses/boss_frost_lich.glb",
+   "bytes": 232724,
+   "sha256": "1e4b45f8bcede54314af3bf5cab36f03d8d2da479c08725297d9a8d3b9201843",
+   "triangles": 6161
+  },
+  "boss_fallen_knight": {
+   "file": "bosses/boss_fallen_knight.glb",
+   "bytes": 193696,
+   "sha256": "376a793bff11dfb1eabfa2c75610f2d9fa102f1fbd873133ecd11aefee3b5c67",
+   "triangles": 4860
+  },
+  "boss_abyss_lord": {
+   "file": "bosses/boss_abyss_lord.glb",
+   "bytes": 193524,
+   "sha256": "69ebe019b9aebca9e44ae6564ffdc841e1897254cede14c5fb57747345d8b0f7",
+   "triangles": 4965
+  },
+  "boss_twin_flame": {
+   "file": "bosses/boss_twin_flame.glb",
+   "bytes": 260880,
+   "sha256": "d59d526afe07caa79970df157ea047430e7069381018a5abb209ce8859056861",
+   "triangles": 6556
+  },
+  "boss_twin_frost": {
+   "file": "bosses/boss_twin_frost.glb",
+   "bytes": 246212,
+   "sha256": "f0f5b0fe5303899af5831c7541a69912b49e8ecde810c73c1d2926b4d39c97e2",
+   "triangles": 5978
+  },
+  "boss_bone_sovereign": {
+   "file": "bosses/boss_bone_sovereign.glb",
+   "bytes": 277160,
+   "sha256": "1943d9c98e3d2021cd75a0b29367109c9d3241449b394a5893b7c70d18255d92",
+   "triangles": 7515
+  },
+  "slime": {
+   "file": "monsters/slime.glb",
+   "bytes": 68764,
+   "sha256": "28f6549c68bf6d899f6620f16f834092a5940bcf4f6b293c7aa7bbcf83b5f937",
+   "triangles": 1384,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "vampire_bat": {
+   "file": "monsters/vampire_bat.glb",
+   "bytes": 76676,
+   "sha256": "6a3ab20e89a78a0b71aae83c17b8bc3b99b5533005d5ea72a94c0084f5596c2d",
+   "triangles": 892,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "gargoyle": {
+   "file": "monsters/gargoyle.glb",
+   "bytes": 129984,
+   "sha256": "f93cc908c66cf6a8f94fc3e5af4b9bf3322a932515c7cb40d75083ab22f628be",
+   "triangles": 1618,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "lava_imp": {
+   "file": "monsters/lava_imp.glb",
+   "bytes": 76776,
+   "sha256": "155fb597a2fdea5dcf8bb354d927498145a157441bf215ba3f32d1eb64289f31",
+   "triangles": 822,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "thorn_treant": {
+   "file": "monsters/thorn_treant.glb",
+   "bytes": 116860,
+   "sha256": "a81a3c6b88cab71c2ed9ce7d334c2e05c99b24d5aced90c3d14be3f91a848c62",
+   "triangles": 1780,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "boss_lava_golem": {
+   "file": "bosses/boss_lava_golem.glb",
+   "bytes": 115164,
+   "sha256": "dcf75705ef810f56c74e0c83ab5136a3a8d294f8f7b5d5e27647611e35f610f6",
+   "triangles": 1288,
+   "clips": [
+    "Attack",
+    "Attack2",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  }
+ },
+ "generated": "2026-10-19T19:53:16"
+}
