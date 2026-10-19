@@ -38,7 +38,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
   if (Q.bloom) {
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.55, 0.55, 0.78);
+    bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.5, 0.5, 0.86);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
   }

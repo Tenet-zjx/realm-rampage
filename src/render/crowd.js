@@ -128,7 +128,7 @@ export function createCrowdRenderer(scene, assets, { capacity = 380 } = {}) {
         if (isAlly) { const t = ent.def.tint || [0.4, 1, 0.6]; r = t[0]; gg = t[1]; b = t[2]; }
         else if (ent.affixes?.length) { const c = new THREE.Color(AFFIX[ent.affixes[0]].color); r = 0.75 + c.r * 0.35; gg = 0.75 + c.g * 0.35; b = 0.75 + c.b * 0.35; }
         else if (ent.officer) { r = 1.15; gg = 1.0; b = 0.8; }
-        g.aTint.array[ti] = r; g.aTint.array[ti + 1] = gg; g.aTint.array[ti + 2] = b; g.aTint.array[ti + 3] = Math.min(1, (ent.flash || 0) * 0.9);
+        g.aTint.array[ti] = r; g.aTint.array[ti + 1] = gg; g.aTint.array[ti + 2] = b; g.aTint.array[ti + 3] = Math.min(1, (ent.flash || 0) * (ent.flash || 0) * 0.8);
         const st = ent.status || {};
         const dissolve = ent.dying ? Math.max(0, (ent.deathT - (ent.boss ? 2.6 : 0.65)) / 0.55) : 0;
         g.aFx.array[ti] = dissolve;

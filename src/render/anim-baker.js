@@ -99,7 +99,7 @@ float rrHash( vec3 p ) { p = fract( p * 0.3183099 + 0.1 ); p *= 17.0; return fra
   if ( vFx.z < 0.0 ) diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.45, 1.0, 0.35 ), -vFx.z * 0.45 );`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
   totalEmissiveRadiance += diffuseColor.rgb * rrGlow * uGlow;
-  totalEmissiveRadiance += vec3( 1.0, 0.95, 0.9 ) * vTint.a * 1.8;
+  totalEmissiveRadiance += vec3( 1.0, 0.95, 0.9 ) * vTint.a * 0.55;
   totalEmissiveRadiance += vec3( 0.4, 0.75, 1.0 ) * vFx.y * 0.35;
   float rrRim = pow( 1.0 - saturate( dot( normalize( vViewPosition ), normal ) ), 3.0 );
   totalEmissiveRadiance += mix( vec3( 1.0, 0.85, 0.7 ), vTint.rgb, step( 0.5, vFx.w ) ) * rrRim * ( 0.1 + vFx.w * 0.6 );
