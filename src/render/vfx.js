@@ -85,7 +85,7 @@ export function createVfx(scene, { quality = 'high' } = {}) {
     mesh('sphere', { core: p2.core, main: p2.main, noise: 0.2, fres: 1 }, delay, (m, k) => { m.position.set(sx + (f.x - sx) * k, h * (1 - k) + 0.5, sz + (f.z - sz) * k); m.scale.setScalar(0.7); for (let i = 0; i < 2; i++) parts.emit({ x: m.position.x, y: m.position.y, z: m.position.z, vx: rnd(-1, 1), vy: rnd(-1, 1), vz: rnd(-1, 1), life: 0.45, size: 0.6, color: p2.core, color2: p2.main, shape: 4 }); });
     telegraphFriendly(f, p2, delay);
     later(delay, () => { sphere(f.x, 0.5, f.z, f.r, p2, 0.45); shock(f.x, 0.25, f.z, f.r * 1.2, p2, 0.5); burst(f.x, 0.6, f.z, p2, { count: 40, speed: 10, up: 6, shape: 4, size: 0.45 }); flash(f.x, 1.5, f.z, p2, 60, 0.35, 16); }); };
-  R.frostNova = (f, pp) => { const p2 = P('frost'); R.nova(f, p2, { shape: 2, size: 0.45, count: 50, stretch: 1.2 }); smokePuff(f.x, 0.5, f.z, col('#cfefff'), { count: 10, size: 1.8, speed: f.r }); decalOnce(f, p2, { type: 0, life: 1.6, r: f.r, alpha: 0.35 }); };
+  R.frostNova = (f, pp) => { const p2 = P('frost'); R.nova(f, p2, { shape: 2, size: 0.45, count: 50, stretch: 1.2 }); smokePuff(f.x, 0.5, f.z, col('#cfefff'), { count: 10, size: 1.8, speed: f.r }); decalOnce(f, p2, { type: 1, life: 0.9, r: f.r, alpha: 0.5 }); };
   R.arcaneNova = (f) => R.nova(f, P('arcane'), { shape: 4 });
   R.boneNova = (f) => { R.nova(f, P('shadow'), { shape: 7 }); };
   R.darkPulse = (f) => R.nova(f, P('shadow'), { shape: 5, count: 30 });
@@ -212,6 +212,7 @@ export function createVfx(scene, { quality = 'high' } = {}) {
         if (f.follow === 'player') { x = game.player.x; zz = game.player.z; }
         const r = f.r || 3;
         (z.dark || z.danger ? decalsDark : decalsAdd).push(x, 0.04, zz, (z.spin || 0) * f.t * 2, r * 2, r * 2, z.danger ? col('#a0ff60') : pp.main, z.dark ? 0.75 : 0.9, z.decal, 0.82, 0, 0.12, 0, f.t, z.alpha * fade, z.spin || 0);
+        if (z.core === 'sphere') decalsDark.push(x, 0.05, zz, 0, r * 1.1, r * 1.1, col('#000000'), 0.9 * fade, 0, 0, 0, 0.5, 0, f.t, 1, 0);
         if (core) {
           if (z.core === 'sphere') { core.position.set(x, 1.2, zz); core.scale.setScalar(r * 0.22 * fade + 0.01); core.material.uniforms.uAlpha.value = fade; }
           if (z.core === 'dome') { core.position.set(x, 0, zz); core.scale.setScalar(r); core.material.uniforms.uAlpha.value = 0.4 * fade; }

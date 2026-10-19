@@ -42,7 +42,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
   }
-  const cam = { x: 0, z: 0, dist: 22, trauma: 0, fovKick: 0, zoom: 1, targetZoom: 1, lookY: 1 };
+  const cam = { x: 0, z: 0, dist: 19, trauma: 0, fovKick: 0, zoom: 1, targetZoom: 1, lookY: 1 };
   const tmpV = new THREE.Vector3();
   let width = 1, height = 1, frameAvg = 16, lastAdapt = 0;
 
@@ -113,6 +113,39 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
   }
   const pal2 = (name) => { const pp = pal(name === 'soul' ? 'shadow' : name || 'arcane'); return { core: col(pp.core), main: col(name === 'soul' ? '#9ad8ff' : pp.main), dark: col(pp.dark), shape: 0 }; };
   const castCircles = [];
+  // objective markers (capture points, defend crystal, escape portal)
+  const markerMeshes = new Map();
+  const getMarker = (key, kind, o) => { let m = markerMeshes.get(key); if (!m) { m = vfx.pool.get(kind, o); markerMeshes.set(key, m); } return m; };
+  function syncMarkers(game) {
+    const st = game.stage, t = game.time, used = new Set();
+    if (st?.points) for (const pt of st.points) {
+      const c = pt.captured ? col('#6fdc5a') : col('#ffd76a');
+      vfx.decalsAdd.push(pt.x, 0.05, pt.z, t * 0.3, pt.r * 2, pt.r * 2, c, 0.9, 5, 0, 0, 0.1, 0, t, 1, 0.3);
+      vfx.decalsAdd.push(pt.x, 0.055, pt.z, 0, pt.r * 2, pt.r * 2, c, 0.6, 1, 0.9, 0, 0.05, Math.max(0.01, pt.progress), t, 1, 0);
+      const key = `pt${pt.id}`; used.add(key);
+      const m = getMarker(key, 'cylinder', { core: c, main: c, scroll: 1.5, noise: 0.5 });
+      m.position.set(pt.x, 0, pt.z); m.scale.set(0.6, 14, 0.6); m.material.uniforms.uAlpha.value = pt.captured ? 0.25 : 0.55;
+      m.material.uniforms.uMain.value.copy(c); m.material.uniforms.uCore.value.copy(c);
+    }
+    if (st?.crystal) {
+      const cr = st.crystal; used.add('crystal'); used.add('crystalAura');
+      const m = getMarker('crystal', 'crystal', { color: col('#b08aff'), emissive: col('#7a3aff'), emissiveIntensity: 1.4 });
+      m.position.set(cr.x, 0.4 + Math.sin(t * 2) * 0.15, cr.z); m.rotation.y = t * 0.8; m.scale.setScalar(2.4);
+      const k = Math.max(0, cr.hp / cr.maxHp);
+      m.material.emissive.setRGB(0.48 * k + (cr.hitT > 0 ? 0.6 : 0), 0.23 * k, 1.0 * k);
+      if (cr.hitT > 0) cr.hitT -= 0.016;
+      const aura = getMarker('crystalAura', 'cylinder', { core: col('#e8d8ff'), main: col('#a35cff'), scroll: 1 });
+      aura.position.set(cr.x, 0, cr.z); aura.scale.set(1.8, 6, 1.8); aura.material.uniforms.uAlpha.value = 0.35 * k + 0.1;
+      vfx.decalsAdd.push(cr.x, 0.05, cr.z, t, 7, 7, col('#a35cff'), 0.8, 5, 0, 0, 0.1, 0, t, 1, 0.5);
+    }
+    if (st?.portal) {
+      const pt = st.portal; used.add('portal');
+      vfx.decalsAdd.push(pt.x, 0.05, pt.z, t, pt.r * 2.4, pt.r * 2.4, col('#6fd8ff'), 1, 4, 0, 0, 0.1, 0, t, 1, 1.2);
+      const m = getMarker('portal', 'cylinder', { core: col('#ffffff'), main: col('#6fd8ff'), scroll: 3 });
+      m.position.set(pt.x, 0, pt.z); m.scale.set(pt.r * 0.8, 16, pt.r * 0.8); m.material.uniforms.uAlpha.value = 0.6;
+    }
+    for (const [key, m] of markerMeshes) if (!used.has(key)) { vfx.pool.release(m); markerMeshes.delete(key); }
+  }
 
   function updateCamera(game, dt) {
     const p = game.player;
@@ -142,7 +175,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
       await crowd.prepare(models);
     },
     resize,
-    resetForStage(game) { adaptFrom = performance.now() + 4000; vfx.clear(); numbers.clear(); units.reset(); cam.x = game.player.x; cam.z = game.player.z; cam.targetZoom = 1; cam.zoom = 1; },
+    resetForStage(game) { adaptFrom = performance.now() + 4000; for (const [, m] of markerMeshes) vfx.pool.release(m); markerMeshes.clear(); vfx.clear(); numbers.clear(); units.reset(); cam.x = game.player.x; cam.z = game.player.z; cam.targetZoom = 1; cam.zoom = 1; },
     frame(game, dt, rawMs) {
       const key = `${game.stageIndex}-${game.biomeId}-${game.obstacles.length}`;
       if (key !== lastBiomeKey) { lastBiomeKey = key; arena.setBiome(game); }
@@ -152,6 +185,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
       vfx.sync(game, dt);
       // cast circles under the hero
       for (let i = castCircles.length - 1; i >= 0; i--) { const c = castCircles[i]; c.t += dt; if (c.t > 0.5) { castCircles.splice(i, 1); continue; } vfx.decalsAdd.push(c.x, 0.06, c.z, c.t * 3, 3.2, 3.2, c.pp.main, 1 - c.t * 2, 5, 0, 0, 0.1, 0, c.t, 1, 0); }
+      syncMarkers(game);
       entities.sync(game, dt, units);
       numbers.update(dt);
       arena.update(game, dt, camera);

@@ -113,7 +113,7 @@ export function createOverlays(root, ctx) {
     const p = h('div', { class: 'map panel' });
     const layers = m.layers;
     const W = 100, H = 100;
-    const pos = (n) => ({ x: n.x * W, y: 92 - (n.layer / (layers.length - 1)) * 84 });
+    const pos = (n) => ({ x: 7 + (n.layer / (layers.length - 1)) * 86, y: 12 + n.x * 76 });
     let lines = '';
     for (const n of layers.flat()) for (const nid of n.next) { const t = nodeById(m, nid); const a = pos(n), b = pos(t); lines += `<line x1="${a.x}%" y1="${a.y}%" x2="${b.x}%" y2="${b.y}%" stroke="${n.done ? '#ffd76a' : 'rgba(255,255,255,0.18)'}" stroke-width="${n.done ? 3 : 2}" stroke-dasharray="${n.done ? '' : '6 6'}"/>`; }
     p.innerHTML = `<h2>${esc(game.chapter.name)}</h2><div class="sub">第 ${game.chapter.id} 章 · 选择下一个节点 · 💰 ${Math.floor(game.inventory.gold)} · 生命 ${Math.ceil(game.player.hp)}/${Math.round(game.stats.maxHp)} · Lv ${game.run.level}</div>

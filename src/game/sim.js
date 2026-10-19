@@ -130,7 +130,7 @@ function attachApi(game) {
   };
   game.objectivePoint = () => {
     const st = game.stage;
-    if (st?.portal) return { x: st.portal.x, z: st.portal.z - 4 };
+    if (st?.portal) return { x: st.portal.x, z: st.portal.z };
     const open = st?.points?.find((p) => !p.captured); if (open) return { x: open.x, z: open.z };
     return { x: 0, z: 0 };
   };

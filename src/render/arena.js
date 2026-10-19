@@ -12,10 +12,12 @@ function groundTexture(colors, seed = 1) {
   for (let y = 0; y < S; y += tile) for (let x = 0; x < S; x += tile) {
     const off = (y / tile) % 2 ? tile / 2 : 0;
     g.fillStyle = rnd() < 0.5 ? colors[1] : colors[2];
-    g.globalAlpha = 0.35 + rnd() * 0.3;
+    g.globalAlpha = 0.16 + rnd() * 0.16;
     g.fillRect(((x + off) % S) + 2, y + 2, tile - 4, tile - 4);
   }
   g.globalAlpha = 1;
+  // large soft patches to break the tiling
+  for (let i = 0; i < 40; i++) { const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1); const x = rnd() * S, y = rnd() * S, r = 30 + rnd() * 90; g.save(); g.translate(x, y); g.scale(r, r); gr.addColorStop(0, rnd() < 0.5 ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.06)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(-1, -1, 2, 2); g.restore(); }
   // grime and speckles
   for (let i = 0; i < 2600; i++) {
     g.fillStyle = rnd() < 0.5 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.05)';

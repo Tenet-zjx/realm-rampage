@@ -84,7 +84,7 @@ export function startStage(game, stage) {
   if (stage.objective.type === 'escape') { stage.portal.z = game.arena.half - 5; game.player.x = 0; game.player.z = -game.arena.half + 5; }
   else { game.player.x = 0; game.player.z = stage.objective.type === 'defend' ? -2 : 0; }
   computeScaling(game);
-  if (stage.crystal) { stage.crystal.maxHp = 1600 * (1 + (game.nodeDepth || 0) * 0.2); stage.crystal.hp = stage.crystal.maxHp; }
+  if (stage.crystal) { stage.crystal.maxHp = 260 * game.scaling.dmg * (1 + (game.nodeDepth || 0) * 0.15) * 12; stage.crystal.hp = stage.crystal.maxHp; }
   layoutArena(game, game.biome);
   const o = stage.objective;
   emit(game, { type: 'stageStart', name: OBJECTIVES[o.type].name, desc: OBJECTIVES[o.type].desc(o), glyph: OBJECTIVES[o.type].icon });
@@ -185,7 +185,7 @@ export function updateDirector(game, dt) {
   st.officerT -= dt;
   if (st.officerT <= 0 && fighting) {
     st.officerT = o.type === 'officers' ? 18 : 55;
-    if (o.type !== 'officers' || st.officersSpawned < o.count) { const sp = spawnPoint(game); spawnOfficer(game, sp.x, sp.z); spawnSquad(game, 10, sp.x, sp.z); st.officersSpawned = (st.officersSpawned || 0) + 1; }
+    if (o.type !== 'officers' || (st.officersSpawned || 0) < o.count) { const sp = spawnPoint(game); spawnOfficer(game, sp.x, sp.z); spawnSquad(game, 10, sp.x, sp.z); st.officersSpawned = (st.officersSpawned || 0) + 1; }
   }
   // runes
   st.runeT -= dt;
@@ -221,7 +221,7 @@ function updateObjective(game, dt) {
     case 'defend': {
       const c = st.crystal;
       st.progress = game.stageTime / o.time;
-      game.grid.query(c.x, c.z, 3.2, (e) => { if (!e.dying && e.team === 'enemy' && e.state === 'attack' && e.stateT < dt * 1.5) c.hp -= e.dmg * 0.6; });
+      game.grid.query(c.x, c.z, 3.4, (e) => { if (!e.dying && e.team === 'enemy' && e.state === 'attack' && e.stateT < dt * 1.5) { c.hp -= e.dmg * 0.25; c.hitT = 0.2; } });
       if (c.hp <= 0) { emit(game, { type: 'banner', text: '水晶被摧毁', sub: '守护失败', style: 'danger' }); game.fail('crystal'); }
       break;
     }

@@ -92,7 +92,7 @@ function targetOf(game, e) {
   let best = p.dead || p.stealthT > 0 ? null : { x: p.x, z: p.z, ally: null };
   let bd = best ? dist2(e.x, e.z, p.x, p.z) : 1e9;
   const c = game.stage?.crystal;
-  if (c && c.hp > 0) { const dc = dist2(e.x, e.z, c.x, c.z); if (dc < 18 * 18 && (bd > 25 || dc < 9)) { best = { x: c.x, z: c.z, ally: null, crystal: true }; bd = dc; } }
+  if (c && c.hp > 0 && e.seed < 0.45) { const dc = dist2(e.x, e.z, c.x, c.z); if (dc < 18 * 18 && (bd > 25 || dc < 9)) { best = { x: c.x, z: c.z, ally: null, crystal: true }; bd = dc; } }
   for (const a of game.allies) {
     if (a.hp <= 0) continue;
     const d = dist2(e.x, e.z, a.x, a.z);

@@ -65,8 +65,8 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     refs.skillbar.innerHTML = slots.map((id, i) => `<div class="slot" data-i="${i}">${id ? skillIconHtml(id, { lv: game.skills.owned.get(id)?.lv }) : ''}<div class="cd" style="--p:0%"></div><div class="cdt"></div><span class="kbd key">${SKILL_KEYS[i]}</span></div>`).join('');
     const autos = [], passives = [];
     for (const [id, s] of game.skills.owned) { const d = SKILL[id]; if (d.kind === 'auto') autos.push(skillIconHtml(id, { size: 'sm', lv: s.lv })); else if (d.kind === 'passive') passives.push(skillIconHtml(id, { size: 'sm', lv: s.lv })); }
-    refs.autobar.innerHTML = autos.join('') || '<span class="muted" style="font-size:11px">自动技</span>';
-    refs.passivebar.innerHTML = passives.join('') || '<span class="muted" style="font-size:11px">被动</span>';
+    refs.autobar.innerHTML = `<span class="muted" style="font-size:10px;width:100%">自动技 ${autos.length}/6</span>` + autos.join('');
+    refs.passivebar.innerHTML = `<span class="muted" style="font-size:10px;width:100%">被动 ${passives.length}/8</span>` + passives.join('');
   }
   function rebuildItems(game) {
     const inv = game.inventory;
@@ -104,6 +104,28 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     const p = game.player;
     mm.save(); mm.translate(cx + p.x * s, cz + p.z * s); mm.rotate(-p.face + Math.PI);
     mm.fillStyle = '#fff'; mm.beginPath(); mm.moveTo(0, -9); mm.lineTo(6, 7); mm.lineTo(-6, 7); mm.closePath(); mm.fill(); mm.restore();
+  }
+
+  const arrows = [];
+  function updateArrows(game) {
+    const st = game.stage, targets = [];
+    if (st?.points) for (const p of st.points) if (!p.captured) targets.push({ x: p.x, z: p.z, g: '旗' });
+    if (st?.portal) targets.push({ x: st.portal.x, z: st.portal.z, g: '门' });
+    if (st?.crystal) targets.push({ x: st.crystal.x, z: st.crystal.z, g: '晶' });
+    for (const b of game.bosses) if (!b.dying) targets.push({ x: b.x, z: b.z, g: '王' });
+    for (const pk of game.pickups) if (pk.kind === 'rune') targets.push({ x: pk.x, z: pk.z, g: '符' });
+    while (arrows.length < targets.length) { const a = h('div', { class: 'offscreen' }); a.innerHTML = '<b></b>'; refs.tags.append(a); arrows.push(a); }
+    const pos = {}, W = window.innerWidth, H = window.innerHeight, m = 40;
+    arrows.forEach((a, i) => {
+      const t = targets[i];
+      if (!t) { a.style.display = 'none'; return; }
+      project(t.x, 1, t.z, pos);
+      const inside = pos.visible && pos.x > m && pos.x < W - m && pos.y > m + 60 && pos.y < H - m - 80;
+      if (inside) { a.style.display = 'none'; return; }
+      const cx = W / 2, cy = H / 2; let dx = pos.x - cx, dy = pos.y - cy; if (!pos.visible) { dx = -dx; dy = -dy; }
+      const k = Math.min((W / 2 - m) / Math.abs(dx || 1), (H / 2 - m - 60) / Math.abs(dy || 1));
+      a.style.display = ''; a.style.left = `${cx + dx * k}px`; a.style.top = `${cy + dy * k}px`; a.firstChild.textContent = t.g;
+    });
   }
 
   function updateTags(game) {
@@ -198,6 +220,7 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
       refs.vignette.className = `vignette ${hurtT > 0 ? 'hurt' : ''} ${hpK < 0.25 && !p.dead ? 'lowhp' : ''} ${musouT ? 'musou' : ''}`;
       drawMinimap(game);
       updateTags(game);
+      updateArrows(game);
       // events -> announcements
       for (const ev of game.events) {
         switch (ev.type) {

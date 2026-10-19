@@ -145,7 +145,7 @@ export function createMenus(root, ctx) {
       const board = h('div', { class: 'talent-board' });
       for (const line of TALENT_LINES) {
         const col = h('div', { class: 'tline', style: { color: line.color } });
-        col.innerHTML = `<h3>${line.glyph} ${line.name}</h3>`;
+        col.innerHTML = `<h3>${line.name}</h3>`;
         for (const t of TALENTS.filter((x) => x.line === line.id)) {
           const on = p.talents.includes(t.id), chk = canBuyTalent(p, t.id);
           const n = h('button', { class: `tnode ${on ? 'on' : ''} ${!on && !chk.ok ? 'lock' : ''}`, title: on ? '已点亮' : chk.reason || '点击点亮' });
