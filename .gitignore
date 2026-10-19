@@ -7,3 +7,4 @@ art/source/
 *.blend1
 *.log
 .vite/
+__pycache__/
