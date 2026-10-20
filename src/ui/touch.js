@@ -1,5 +1,6 @@
 import { h } from './dom.js';
 import { SKILL } from '../game/content/skills.js';
+import { skillIconUrl } from './icons.js';
 
 // Mobile controls: floating joystick on the left half, action cluster on the right.
 export function createTouch(root, input) {
@@ -39,7 +40,7 @@ export function createTouch(root, input) {
     el,
     update(game) {
       el.querySelector('.musou').classList.toggle('ready', game.player.musou >= 100);
-      el.querySelectorAll('.sk').forEach((b, i) => { const id = game.skills.slots[i]; const o = id && game.skills.owned.get(id); b.textContent = id ? SKILL[id].glyph || SKILL[id].name[0] : '·'; if (o) { const k = o.cd > 0 && o.max ? o.cd / o.max : 0; b.style.background = k > 0 ? `conic-gradient(rgba(0,0,0,0.75) ${k * 100}%, rgba(20,16,30,0.6) 0)` : ''; } });
+      el.querySelectorAll('.sk').forEach((b, i) => { const id = game.skills.slots[i]; const o = id && game.skills.owned.get(id); if (b.dataset.id !== (id || '')) { b.dataset.id = id || ''; b.textContent = id ? '' : '·'; b.style.backgroundImage = id ? `url("${skillIconUrl(id)}")` : ''; b.style.backgroundSize = 'cover'; } if (o) { const k = o.cd > 0 && o.max ? o.cd / o.max : 0; b.style.boxShadow = k > 0 ? `inset 0 0 0 40px rgba(0,0,0,${0.35 + k * 0.4})` : ''; } });
     },
     setVisible(v) { el.style.display = v ? '' : 'none'; },
   };

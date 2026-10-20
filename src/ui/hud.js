@@ -1,4 +1,5 @@
-import { h, skillIconHtml, itemIconHtml, esc } from './dom.js';
+import { h, skillIconHtml, itemIconHtml, esc, iconImg } from './dom.js';
+import { heroIconUrl, factionIconUrl, skillIconUrl, itemIconUrl, miscIconUrl } from './icons.js';
 import { SKILL } from '../game/content/skills.js';
 import { ITEM } from '../game/content/items.js';
 import { FACTION, FACTIONS } from '../game/content/factions.js';
@@ -78,9 +79,9 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     const counts = game.factionCounts || {};
     refs.factions.innerHTML = FACTIONS.filter((f) => counts[f.id]).sort((a, b) => counts[b.id] - counts[a.id]).map((f) => {
       const n = counts[f.id];
-      return `<div class="fchip" style="color:${f.color}" title="${esc(f.tiers.filter((t) => n >= t.n).map((t) => `${t.n}：${t.text}`).join('\n') || '集齐 2 个技能激活加成')}"><b style="background:${f.color}">${f.glyph}</b><span style="color:#eee">${f.name} ${n}</span><span class="pips">${[2, 4, 6, 8].map((t) => `<i class="${n >= t ? 'on' : ''}"></i>`).join('')}</span></div>`;
-    }).join('') + (game.synergies || []).map((s) => `<div class="fchip" style="color:#ffd76a" title="${esc(s.text)}"><b style="background:linear-gradient(90deg,${FACTION[s.a].color},${FACTION[s.b].color})">羁</b><span style="color:#ffe7a0">${s.name}</span></div>`).join('')
-      + (game.triads || []).map((t) => `<div class="fchip" style="color:#ade55c" title="${esc(t.text)}"><b style="background:#ade55c">合</b><span style="color:#d8ffa8">${t.name}</span></div>`).join('');
+      return `<div class="fchip" style="color:${f.color}" title="${esc(f.tiers.filter((t) => n >= t.n).map((t) => `${t.n}：${t.text}`).join('\n') || '集齐 2 个技能激活加成')}"><b style='${iconImg(factionIconUrl(f.id))}'></b><span style="color:#eee">${f.name} ${n}</span><span class="pips">${[2, 4, 6, 8].map((t) => `<i class="${n >= t ? 'on' : ''}"></i>`).join('')}</span></div>`;
+    }).join('') + (game.synergies || []).map((s) => `<div class="fchip" style="color:#ffd76a" title="${esc(s.text)}"><b style='${iconImg(factionIconUrl(s.a))}'></b><b style='${iconImg(factionIconUrl(s.b))}'></b><span style="color:#ffe7a0">${s.name}</span></div>`).join('')
+      + (game.triads || []).map((t) => `<div class="fchip" style="color:#ade55c" title="${esc(t.text)}">${t.factions.map((x) => `<b style='${iconImg(factionIconUrl(x))}'></b>`).join('')}<span style="color:#d8ffa8">${t.name}</span></div>`).join('');
   }
 
   function drawMinimap(game) {
@@ -151,7 +152,7 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     update(game, dt) {
       const p = game.player, st = game.stats;
       if (!st) return;
-      refs.pg.textContent = game.hero.name[0];
+      if (refs.pg.dataset.hero !== game.hero.id) { refs.pg.dataset.hero = game.hero.id; refs.pg.parentElement.style.backgroundImage = `url("${heroIconUrl(game.hero.id)}")`; }
       refs.lvl.textContent = game.run.level;
       const hpK = Math.max(0, p.hp / st.maxHp);
       refs.hpFill.style.transform = `scaleX(${hpK})`; refs.hpLag.style.transform = `scaleX(${hpK})`;
@@ -209,7 +210,7 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
       const fKey = JSON.stringify(game.factionCounts) + (game.synergies || []).length + (game.triads || []).length;
       if (fKey !== lastFactionKey) { lastFactionKey = fKey; rebuildFactions(game); }
       // buffs
-      refs.buffs.innerHTML = p.buffs.filter((b) => b.t < 60).slice(0, 10).map((b) => `<div class="buff" title="${esc(b.id)}">${esc((SKILL[b.id]?.glyph) || (b.id.startsWith('rune') ? '符' : '增'))}<i style="transform:scaleX(${Math.min(1, b.t / (b.dur || 1))})"></i></div>`).join('');
+      refs.buffs.innerHTML = p.buffs.filter((b) => b.t < 60).slice(0, 10).map((b) => `<div class="buff" title="${esc(SKILL[b.id]?.name || ITEM[b.id]?.name || b.id)}" style='${iconImg(SKILL[b.id] ? skillIconUrl(b.id) : ITEM[b.id] ? itemIconUrl(b.id) : miscIconUrl(b.hotRate ? 'heal' : 'buff'))}'><i style="transform:scaleX(${Math.min(1, b.t / (b.dur || 1))})"></i></div>`).join('');
       // combo
       const c = game.combo.n;
       refs.combo.classList.toggle('hidden', c < 5);

@@ -1,4 +1,5 @@
-import { h, esc, skillIconHtml, itemIconHtml, rarityTag } from './dom.js';
+import { h, esc, skillIconHtml, itemIconHtml, rarityTag, heroIconHtml, enemyIconHtml, iconImg } from './dom.js';
+import { bossIconUrl } from './icons.js';
 import { HEROES, HERO } from '../game/content/heroes.js';
 import { DIFFICULTIES } from '../game/content/difficulties.js';
 import { CHAPTERS, BIOMES } from '../game/content/stages.js';
@@ -66,7 +67,7 @@ export function createMenus(root, ctx) {
       for (const hero of HEROES) {
         const hp = p.heroes[hero.id];
         const c = h('div', { class: `choice ${sel.hero === hero.id ? 'sel' : ''} ${hp.unlocked ? '' : 'locked'}`, style: { width: 'auto' } });
-        c.innerHTML = `<div class="big title-font" style="color:${FACTIONS.find((f) => f.id === hero.palette)?.color}">${hero.name[0]}</div><div class="nm">${esc(hero.name)}</div><div class="ds">${esc(hero.title)}</div><div class="ds">熟练度 ${hp.mastery}${hp.unlocked ? '' : ` · 🔒 ${hero.unlock.desc}`}</div>`;
+        c.innerHTML = `<div style="display:grid;place-items:center">${heroIconHtml(hero.id, 'lg')}</div><div class="nm">${esc(hero.name)}</div><div class="ds">${esc(hero.title)}</div><div class="ds">熟练度 ${hp.mastery}${hp.unlocked ? '' : ` · 🔒 ${hero.unlock.desc}`}</div>`;
         c.onclick = () => { sel.hero = hero.id; playWizard('hero'); };
         list.append(c);
       }
@@ -176,7 +177,7 @@ export function createMenus(root, ctx) {
         const need = MASTERY.xpFor(hp.mastery);
         const skins = ctx.skinNames(hero.id);
         const c2 = h('div', { class: 'codex-item', style: { display: 'grid', gap: '6px' } });
-        c2.innerHTML = `<div style="display:flex;gap:10px;align-items:center"><div class="icon lg" style="--c:${FACTIONS.find((f) => f.id === hero.palette)?.color};--r:#e4ae39">${hero.name[0]}</div><div><div class="nm">${esc(hero.name)} <span class="muted">${esc(hero.title)}</span></div><div>熟练度 <b class="gold-text">${hp.mastery}</b> · ${hp.xp}/${need}</div>${hp.unlocked ? '' : `<button class="btn small unlock">解锁 💰 ${hero.unlock.cost}</button>`}</div></div>
+        c2.innerHTML = `<div style="display:flex;gap:10px;align-items:center">${heroIconHtml(hero.id, 'lg')}<div><div class="nm">${esc(hero.name)} <span class="muted">${esc(hero.title)}</span></div><div>熟练度 <b class="gold-text">${hp.mastery}</b> · ${hp.xp}/${need}</div>${hp.unlocked ? '' : `<button class="btn small unlock">解锁 💰 ${hero.unlock.cost}</button>`}</div></div>
           <div class="muted">${Object.entries(MASTERY.unlocks).map(([lv, u]) => `<span style="color:${hp.mastery >= lv ? '#ade55c' : '#6a6458'}">Lv${lv} ${esc(u.text)}</span>`).join(' · ')}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">${skins.map((n, i) => { const lockLv = i === 1 ? 3 : i === 2 ? 6 : 1; const ok = hp.mastery >= lockLv; return `<button class="btn small ${hp.skin === i ? 'primary' : ''}" data-skin="${i}" ${ok ? '' : 'disabled'}>皮肤·${esc(n)}${ok ? '' : ` 🔒Lv${lockLv}`}</button>`; }).join('')}</div>`;
         c2.querySelector('.unlock')?.addEventListener('click', () => { const r = unlockHero(p, hero.id); if (!r.ok) ctx.toast(r.reason); else ctx.save(); camp('heroes'); });
@@ -199,8 +200,8 @@ export function createMenus(root, ctx) {
         for (const d of list) { const c2 = h('div', { class: `codex-item ${seen.skills.has(d.id) ? '' : 'unseen'}` }); c2.innerHTML = `${skillIconHtml(d.id, { size: 'sm' })}<div><div class="nm rar rar-${d.rarity}">${esc(d.name)}</div><div class="muted">${esc(describe(d, 1, null))}</div></div>`; grid.append(c2); }
       }
       if (sub === 'items') for (const it of [...COMPONENTS, ...CRAFTED, ...ARTIFACTS, ...CONSUMABLES, ...NEUTRALS]) { const c2 = h('div', { class: `codex-item ${seen.items.has(it.id) || it.type === 'component' || it.type === 'consumable' ? '' : 'unseen'}` }); c2.innerHTML = `${itemIconHtml(it.id)}<div><div class="nm rar rar-${it.rarity}">${esc(it.name)}</div><div class="muted">${esc(it.desc || Object.entries(it.stats || {}).map(([k, v]) => statLabel(k, v)).join(' '))}${it.parts ? `<br>配方：${it.parts.map((x) => ITEM[x].name).join(' + ')}${it.recipe ? ` + 卷轴 ${it.recipe}` : ''}` : ''}${it.tier ? `<br>${it.tier} 阶秘宝` : ''}</div></div>`; grid.append(c2); }
-      if (sub === 'enemies') for (const e of [...ENEMIES, ...BOSSES]) { const c2 = h('div', { class: `codex-item ${seen.enemies.has(e.model) ? '' : 'unseen'}` }); c2.innerHTML = `<div class="icon sm" style="--c:${e.patterns ? '#ff4a3a' : '#8a8070'};--r:${e.patterns ? '#eb4b4b' : '#b0c3d9'}">${esc(e.name[0])}</div><div><div class="nm">${esc(e.name)}</div><div class="muted">${esc(e.desc || e.title || '')}${e.patterns ? `<br>招式：${e.patterns.map((x) => x.name).join('、')}` : ''}</div></div>`; grid.append(c2); }
-      if (sub === 'rarity') for (const r of RARITIES) { const c2 = h('div', { class: 'codex-item' }); c2.innerHTML = `<div class="icon sm r-${r.id}" style="--c:${r.color};--r:${r.color}">${r.name[0]}</div><div><div class="nm" style="color:${r.color}">${r.name}</div><div class="muted">出现权重 ${r.weight} · 强度系数 ×${r.power}</div></div>`; grid.append(c2); }
+      if (sub === 'enemies') for (const e of [...ENEMIES, ...BOSSES]) { const c2 = h('div', { class: `codex-item ${seen.enemies.has(e.model) ? '' : 'unseen'}` }); c2.innerHTML = `${e.patterns ? `<div class="icon sm" style='--r:#eb4b4b;${iconImg(bossIconUrl())}'></div>` : enemyIconHtml(e.id)}<div><div class="nm">${esc(e.name)}</div><div class="muted">${esc(e.desc || e.title || '')}${e.patterns ? `<br>招式：${e.patterns.map((x) => x.name).join('、')}` : ''}</div></div>`; grid.append(c2); }
+      if (sub === 'rarity') for (const r of RARITIES) { const c2 = h('div', { class: 'codex-item' }); c2.innerHTML = `<div class="icon sm r-${r.id}" style="--r:${r.color};background:radial-gradient(circle,${r.color},#120f1b 75%)"></div><div><div class="nm" style="color:${r.color}">${r.name}</div><div class="muted">出现权重 ${r.weight} · 强度系数 ×${r.power}</div></div>`; grid.append(c2); }
       body.append(grid);
     }
     if (tab === 'achievements') {

@@ -2,6 +2,7 @@ import { SKILL } from '../game/content/skills.js';
 import { FACTION } from '../game/content/factions.js';
 import { ITEM } from '../game/content/items.js';
 import { RARITY } from '../game/content/rarities.js';
+import { skillIconUrl, itemIconUrl, heroIconUrl, factionIconUrl, enemyIconUrl } from './icons.js';
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -19,19 +20,20 @@ export function h(tag, attrs = {}, ...children) {
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const CAT_COLOR = { attack: '#ff7a5a', defense: '#6fb4ff', magic: '#c070ff', utility: '#6fdc5a' };
+const img = (url) => `background-image:url(&quot;${url}&quot;)`;
 export function skillIconHtml(id, { size = '', lv } = {}) {
   const s = SKILL[id]; if (!s) return '';
-  const f = FACTION[s.faction];
-  const color = f?.color || (s.hero ? '#ffd76a' : '#9aa6c0');
-  return `<div class="icon ${size} r-${s.rarity}" style="--c:${color};--r:${RARITY[s.rarity].color}" title="${esc(s.name)}">${esc(s.glyph || s.name[0])}${lv ? `<span class="lv">${lv}</span>` : ''}</div>`;
+  return `<div class="icon ${size} r-${s.rarity}" style="--r:${RARITY[s.rarity].color};${img(skillIconUrl(id))}" title="${esc(s.name)}">${lv ? `<span class="lv">${lv}</span>` : ''}</div>`;
 }
 export function itemIconHtml(id, { size = 'sm' } = {}) {
   const it = ITEM[id]; if (!it) return '';
-  const color = it.type === 'neutral' ? '#a070ff' : it.type === 'consumable' ? '#ff9a6a' : it.type === 'meta' ? '#ffd76a' : CAT_COLOR[it.cat] || '#aaa';
   const r = RARITY[it.rarity || 'common'];
-  return `<div class="icon ${size} r-${it.rarity || 'common'}" style="--c:${color};--r:${r.color}" title="${esc(it.name)}">${esc(it.glyph || it.name[0])}</div>`;
+  return `<div class="icon ${size} r-${it.rarity || 'common'}" style="--r:${r.color};${img(itemIconUrl(id))}" title="${esc(it.name)}"></div>`;
 }
+export const heroIconHtml = (id, size = '') => `<div class="icon ${size} r-immortal" style="--r:#e4ae39;${img(heroIconUrl(id))}"></div>`;
+export const factionIconHtml = (id, size = 'xs') => `<div class="icon ${size}" style="--r:${FACTION[id]?.color || '#888'};${img(factionIconUrl(id))}"></div>`;
+export const enemyIconHtml = (id, size = 'sm', boss = false) => `<div class="icon ${size}" style="--r:${boss ? '#eb4b4b' : '#b0c3d9'};${img(enemyIconUrl(id))}"></div>`;
+export const iconImg = img;
 export const rarityTag = (id) => `<span class="tag rar rar-${id}">${RARITY[id].name}</span>`;
 export const factionTag = (fid) => (FACTION[fid] ? `<span class="tag" style="color:${FACTION[fid].color}">${FACTION[fid].name}</span>` : '');
 export const KIND_NAME = { active: '主动技', auto: '自动技', passive: '被动', internal: '' };

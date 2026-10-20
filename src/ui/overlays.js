@@ -1,4 +1,5 @@
-import { h, esc, skillIconHtml, itemIconHtml, rarityTag, factionTag, KIND_NAME } from './dom.js';
+import { h, esc, skillIconHtml, itemIconHtml, rarityTag, factionTag, KIND_NAME, iconImg } from './dom.js';
+import { nodeIconUrl, eventIconUrl, miscIconUrl } from './icons.js';
 import { SKILL } from '../game/content/skills.js';
 import { ITEM, itemTotalCost } from '../game/content/items.js';
 import { RARITY, rarityTier } from '../game/content/rarities.js';
@@ -38,7 +39,7 @@ export function createOverlays(root, ctx) {
       card.innerHTML = `<div class="rbar">${r.name} · ${c.isEvolve ? '进化' : c.isNew ? '新技能' : `升级 Lv${c.level}`}</div>
         ${c.isEvolve ? '<span class="badge evo">进化</span>' : c.isNew ? '<span class="badge">NEW</span>' : ''}
         ${c.kind !== 'bonus' && !c.isEvolve ? '<button class="ban" title="放逐：本局不再出现">放逐</button>' : ''}
-        <div class="head">${c.kind === 'bonus' ? `<div class="icon lg" style="--c:#ffd76a;--r:${r.color}">${c.glyph}</div>` : skillIconHtml(c.id, { size: 'lg' })}</div>
+        <div class="head">${c.kind === 'bonus' ? `<div class="icon lg" style='--r:${r.color};${iconImg(miscIconUrl(c.id === 'fallback_gold' ? 'gold' : 'heal'))}'></div>` : skillIconHtml(c.id, { size: 'lg' })}</div>
         <div class="name">${esc(c.name)}</div>
         <div class="meta">${c.kind !== 'bonus' ? `${rarityTag(c.rarity)}${factionTag(c.faction)}<span class="tag" style="color:#ccc">${KIND_NAME[c.kind] || ''}</span>${c.cd ? `<span class="tag" style="color:#9ad">冷却 ${c.cd}s</span>` : ''}${def?.hero ? '<span class="tag" style="color:#ffd76a">英雄专属</span>' : ''}` : ''}</div>
         <div class="desc">${esc(c.desc)}${c.isEvolve ? `<div style="margin-top:6px;font-size:12px;color:#ade55c">替换：${esc(SKILL[c.from].name)}</div>` : ''}${!c.isEvolve && def?.evolve ? `<div style="margin-top:6px;font-size:12px;color:#8fd">满级 + ${esc(SKILL[def.evolve.with].name)} → 进化「${esc(SKILL[def.evolve.into].name)}」</div>` : ''}${syn}</div>
@@ -118,7 +119,7 @@ export function createOverlays(root, ctx) {
     for (const n of layers.flat()) for (const nid of n.next) { const t = nodeById(m, nid); const a = pos(n), b = pos(t); lines += `<line x1="${a.x}%" y1="${a.y}%" x2="${b.x}%" y2="${b.y}%" stroke="${n.done ? '#ffd76a' : 'rgba(255,255,255,0.18)'}" stroke-width="${n.done ? 3 : 2}" stroke-dasharray="${n.done ? '' : '6 6'}"/>`; }
     p.innerHTML = `<h2>${esc(game.chapter.name)}</h2><div class="sub">第 ${game.chapter.id} 章 · 选择下一个节点 · 💰 ${Math.floor(game.inventory.gold)} · 生命 ${Math.ceil(game.player.hp)}/${Math.round(game.stats.maxHp)} · Lv ${game.run.level}</div>
       <div class="map-board"><svg>${lines}</svg></div>
-      <div class="legend">${Object.values(NODE_TYPES).map((t) => `<span><b style="color:${t.color}">${t.glyph}</b> ${t.name}</span>`).join('')}</div>
+      <div class="legend">${Object.entries(NODE_TYPES).map(([k, t]) => `<span style="display:inline-flex;gap:4px;align-items:center"><i class="icon xs" style='--r:${t.color};${iconImg(nodeIconUrl(k))}'></i>${t.name}</span>`).join('')}</div>
       <div style="display:flex;gap:10px;justify-content:center"><button class="btn small shopnow">查看装备 / 商店（只读）</button><button class="btn small danger quit">放弃本局</button></div>`;
     const board = p.querySelector('.map-board');
     for (const n of layers.flat()) {
@@ -127,7 +128,7 @@ export function createOverlays(root, ctx) {
       const avail = m.available.includes(n.id);
       const label = n.type === 'battle' ? OBJECTIVES[n.objective]?.name : t.name;
       const b = h('button', { class: `mnode ${avail ? 'avail' : ''} ${n.done ? 'done' : ''} ${m.current === n.id ? 'cur' : ''}`, style: { left: `${a.x}%`, top: `${a.y}%`, color: t.color } });
-      b.innerHTML = `${t.glyph}<small>${esc(label)}</small>`;
+      b.innerHTML = `<small>${esc(label)}</small>`; b.style.backgroundImage = `url("${nodeIconUrl(n.type)}")`;
       if (avail) b.onclick = () => ctx.enterNode(n.id);
       board.append(b);
     }
@@ -138,10 +139,10 @@ export function createOverlays(root, ctx) {
   }
 
   // ------------------------------------------------------------- event / rest / treasure / generic dialogs
-  function dialog(glyph, title, text, options) {
+  function dialog(icon, title, text, options) {
     const ov = h('div', { class: 'overlay' });
     const d = h('div', { class: 'dialog panel' });
-    d.innerHTML = `<div class="glyph">${esc(glyph)}</div><h2>${esc(title)}</h2><div style="line-height:1.6">${text}</div><div class="opts"></div>`;
+    d.innerHTML = `<div class="icon xl" style='--r:#e4ae39;margin:0 auto;${iconImg(icon)}'></div><h2>${esc(title)}</h2><div style="line-height:1.6">${text}</div><div class="opts"></div>`;
     const opts = d.querySelector('.opts');
     options.forEach((o) => { const b = h('button', { class: `btn ${o.primary ? 'primary' : ''}`, disabled: o.disabled }); b.innerHTML = o.html || esc(o.text); b.onclick = o.onClick; opts.append(b); });
     ov.append(d);
@@ -149,13 +150,13 @@ export function createOverlays(root, ctx) {
   }
   function event(game) {
     const ev = game.currentEvent;
-    return open('event', dialog(ev.glyph, ev.name, esc(ev.text), ev.options.map((o, i) => ({ text: `${o.text}${o.cost ? `（💰 ${o.cost}）` : ''}`, disabled: o.cost > game.inventory.gold, onClick: () => ctx.eventOption(i) }))));
+    return open('event', dialog(eventIconUrl(ev.id), ev.name, esc(ev.text), ev.options.map((o, i) => ({ text: `${o.text}${o.cost ? `（💰 ${o.cost}）` : ''}`, disabled: o.cost > game.inventory.gold, onClick: () => ctx.eventOption(i) }))));
   }
   function eventDone(game) {
-    return open('eventDone', dialog('✦', '结果', esc(game.eventResult || ''), [{ text: '继续', primary: true, onClick: () => ctx.eventDone() }]));
+    return open('eventDone', dialog(miscIconUrl('result'), '结果', esc(game.eventResult || ''), [{ text: '继续', primary: true, onClick: () => ctx.eventDone() }]));
   }
   function rest(game) {
-    return open('rest', dialog('火', '篝火营地', '在温暖的篝火旁稍作休整。', [
+    return open('rest', dialog(miscIconUrl('rest'), '篝火营地', '在温暖的篝火旁稍作休整。', [
       { text: `休息：回复 45% 生命（当前 ${Math.ceil(game.player.hp)}/${Math.round(game.stats.maxHp)}）`, primary: true, onClick: () => ctx.restChoice('heal') },
       { text: '磨砺：随机一个技能提升 1 级', onClick: () => ctx.restChoice('upgrade') },
     ]));
@@ -163,13 +164,13 @@ export function createOverlays(root, ctx) {
   function treasure(game) {
     const t = game.treasure;
     const text = t.kind === 'gold' ? `一箱金币：💰 ${t.amount}` : `${itemIconHtml(t.item, { size: 'lg' })}<div style="margin-top:8px">${t.kind === 'neutral' ? '中立秘宝' : '合成装备'}：<b class="rar rar-${ITEM[t.item].rarity}">${esc(ITEM[t.item].name)}</b></div><div class="muted" style="font-size:13px">${esc(ITEM[t.item].desc || '')}</div>`;
-    return open('treasure', dialog('宝', '宝藏', `<div style="display:grid;justify-items:center">${text}</div>`, [{ text: '收下', primary: true, onClick: () => ctx.claimTreasure() }]));
+    return open('treasure', dialog(miscIconUrl('treasure'), '宝藏', `<div style="display:grid;justify-items:center">${text}</div>`, [{ text: '收下', primary: true, onClick: () => ctx.claimTreasure() }]));
   }
   function pause(game) {
     const build = [...game.skills.owned.entries()].map(([id, s]) => `<div style="display:flex;gap:8px;align-items:center;text-align:left">${skillIconHtml(id, { size: 'sm', lv: s.lv })}<div><b class="rar rar-${SKILL[id].rarity}">${esc(SKILL[id].name)}</b> <span class="muted">Lv${s.lv}</span><div class="muted" style="font-size:12px">${esc(describe(SKILL[id], s.lv, game.stats))}</div></div></div>`).join('');
     const st = game.stats;
     const stats = `<div class="statgrid" style="text-align:left"><div><span>攻击</span><b>${Math.round(st.atk)}</b></div><div><span>生命</span><b>${Math.round(st.maxHp)}</b></div><div><span>护甲</span><b>${Math.round(st.armor)}</b></div><div><span>暴击</span><b>${Math.round(st.critChance * 100)}% × ${st.critMult.toFixed(2)}</b></div><div><span>攻速</span><b>${Math.round(st.attackRate * 100)}%</b></div><div><span>冷却缩减</span><b>${Math.round(st.cdrTotal * 100)}%</b></div><div><span>范围</span><b>${Math.round(st.areaMult * 100)}%</b></div><div><span>技能伤害</span><b>+${Math.round(st.skillDmg * 100)}%</b></div><div><span>吸血</span><b>${Math.round(st.lifestealTotal * 100)}%</b></div><div><span>移速</span><b>${st.speed.toFixed(1)}</b></div></div>`;
-    const ov = dialog('停', '暂停', `<div style="display:grid;gap:12px">${stats}<div style="display:grid;gap:6px;max-height:36vh;overflow-y:auto">${build || '<span class="muted">尚未获得技能</span>'}</div></div>`, [
+    const ov = dialog(miscIconUrl('pause'), '暂停', `<div style="display:grid;gap:12px">${stats}<div style="display:grid;gap:6px;max-height:36vh;overflow-y:auto">${build || '<span class="muted">尚未获得技能</span>'}</div></div>`, [
       { text: '继续战斗', primary: true, onClick: () => ctx.resume() }, { text: '设置', onClick: () => ctx.openSettings() }, { text: '放弃本局', onClick: () => ctx.quitRun() },
     ]);
     ov.querySelector('.dialog').style.width = 'min(720px, 96vw)';

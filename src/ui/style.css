@@ -32,11 +32,12 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .muted { color: var(--muted); }
 
 /* ---------- icons (glyph + faction gradient + rarity frame) ---------- */
-.icon { --c: #888; --r: var(--r-common); position: relative; width: 52px; height: 52px; border-radius: 10px; display: grid; place-items: center; flex: none;
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 70%, white 10%), color-mix(in srgb, var(--c) 35%, #0a0810) 70%);
-  border: 2px solid var(--r); box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6), 0 0 10px color-mix(in srgb, var(--r) 40%, transparent); font-family: var(--title-font); font-size: 26px; font-weight: 700; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px var(--c); overflow: hidden; }
-.icon.sm { width: 38px; height: 38px; font-size: 19px; border-radius: 8px; border-width: 2px; }
-.icon.lg { width: 72px; height: 72px; font-size: 38px; border-radius: 14px; border-width: 3px; }
+.icon { --r: var(--r-common); position: relative; width: 52px; height: 52px; border-radius: 10px; display: grid; place-items: center; flex: none; background-color: #120f1b; background-size: cover; background-position: center;
+  border: 2px solid var(--r); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 10px color-mix(in srgb, var(--r) 40%, transparent); overflow: hidden; }
+.icon.sm { width: 38px; height: 38px; border-radius: 8px; border-width: 2px; }
+.icon.xs { width: 22px; height: 22px; border-radius: 6px; border-width: 1px; }
+.icon.lg { width: 72px; height: 72px; border-radius: 14px; border-width: 3px; }
+.icon.xl { width: 96px; height: 96px; border-radius: 18px; border-width: 3px; }
 .icon.r-immortal::after, .icon.r-arcana::after, .icon.r-ancient::after { content: ''; position: absolute; inset: -50%; background: conic-gradient(from 0deg, transparent 0 70%, rgba(255, 255, 255, 0.55) 80%, transparent 90%); animation: spin 2.6s linear infinite; mix-blend-mode: screen; }
 .icon .lv { position: absolute; right: 2px; bottom: 0; font: 700 11px var(--body-font); color: #fff; text-shadow: 0 1px 2px #000; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -48,7 +49,7 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 #hud .pe { pointer-events: auto; }
 .hud-top { position: absolute; top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l)); right: calc(12px + var(--safe-r)); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .hero-card { display: flex; gap: 10px; align-items: center; padding: 8px 12px 8px 8px; min-width: 300px; }
-.hero-portrait { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font: 700 26px var(--title-font); background: radial-gradient(circle at 40% 35%, #ffe8a8, #a4651a 70%); color: #2a1400; border: 2px solid var(--gold); box-shadow: 0 0 16px rgba(255, 200, 80, 0.4); position: relative; }
+.hero-portrait { width: 54px; height: 54px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid var(--gold); box-shadow: 0 0 16px rgba(255, 200, 80, 0.4); position: relative; }
 .hero-portrait .lvl { position: absolute; bottom: -6px; right: -6px; background: #1a1428; border: 1px solid var(--gold); border-radius: 999px; font: 700 11px var(--body-font); padding: 1px 6px; color: var(--gold); }
 .bars { flex: 1; display: grid; gap: 5px; }
 .bar { position: relative; height: 14px; border-radius: 7px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 255, 255, 0.12); overflow: hidden; }
@@ -105,10 +106,10 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .belt .key { position: absolute; top: -6px; left: -4px; }
 .factions { position: absolute; left: calc(12px + var(--safe-l)); top: 120px; display: grid; gap: 4px; }
 .fchip { display: flex; align-items: center; gap: 6px; padding: 3px 8px 3px 4px; border-radius: 999px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 12px; }
-.fchip b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font: 700 12px var(--title-font); color: #000; }
+.fchip b { display: block; width: 22px; height: 22px; border-radius: 50%; background-size: cover; border: 1px solid currentColor; }
 .fchip .pips { display: flex; gap: 2px; } .fchip .pips i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); } .fchip .pips i.on { background: currentColor; box-shadow: 0 0 6px currentColor; }
 .buffs { position: absolute; left: calc(12px + var(--safe-l)); top: 82px; display: flex; gap: 4px; }
-.buff { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font: 700 13px var(--title-font); background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); position: relative; }
+.buff { width: 28px; height: 28px; border-radius: 6px; background-size: cover; background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.25); position: relative; }
 .buff i { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); transform-origin: left; }
 
 /* banners & announcements */
@@ -200,7 +201,7 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .map { width: min(980px, 96vw); padding: 20px; display: grid; gap: 12px; }
 .map-board { position: relative; height: min(460px, 58vh); border-radius: 12px; background: radial-gradient(ellipse at 50% 100%, rgba(255, 180, 80, 0.08), transparent 60%), repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 40px); border: 1px solid var(--line); overflow: hidden; }
 .map-board svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.mnode { position: absolute; transform: translate(-50%, -50%); width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font: 700 22px var(--title-font); border: 2px solid currentColor; background: rgba(12, 10, 20, 0.9); box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.4); cursor: default; }
+.mnode { position: absolute; transform: translate(-50%, -50%); width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; border: 2px solid currentColor; background-color: rgba(12, 10, 20, 0.9); background-size: cover; background-position: center; box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.4); cursor: default; }
 .mnode.avail { cursor: pointer; animation: musouPulse 1s infinite; box-shadow: 0 0 20px currentColor; }
 .mnode.done { opacity: 0.45; } .mnode.cur { box-shadow: 0 0 0 4px var(--gold), 0 0 26px var(--gold); }
 .mnode small { position: absolute; top: 58px; font: 600 11px var(--body-font); white-space: nowrap; color: var(--text); }
