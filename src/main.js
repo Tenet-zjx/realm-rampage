@@ -178,6 +178,7 @@ function stepGame(dt, rawMs) {
   if (g.status === 'playing') updateGame(g, dt, input.snapshot());
   else { input.snapshot(); g.events = []; }
   for (const ev of g.events) audio.event(ev, g);
+  audio.tick?.(g);
   renderer.frame(g, g.status === 'playing' ? dt : 0.0001, rawMs);
   hud.update(g, dt);
   touch?.update(g);

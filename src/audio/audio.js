@@ -1,4 +1,5 @@
 // Original procedural audio: every SFX and music loop is synthesized live with WebAudio (no sample files).
+import { DEBUFF } from '../game/content/debuffs.js';
 const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12);
 const SCALES = { penta: [0, 2, 4, 7, 9], minorPenta: [0, 3, 5, 7, 10], dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10], lydian: [0, 2, 4, 6, 7, 9, 11], harmonicMinor: [0, 2, 3, 5, 7, 8, 11] };
 const SONGS = {
@@ -92,8 +93,22 @@ export function createAudio(settings = {}) {
     rune: (t, d) => { osc('sine', 300, 1200, t, 0.5, 0.15, d); FX.reveal(t + 0.1, d, 3); },
     shoot: (t, d) => noise(t, 0.08, 0.12, d, { f0: 2500, f1: 1200, q: 2 }),
     heal: (t, d) => [0, 4, 7].forEach((s, i) => osc('sine', NOTE(76 + s), 0, t + i * 0.04, 0.3, 0.06, d)),
+    // v1.1 debuffs and special-enemy abilities
+    debuff: (t, d, kind = 'dot') => {
+      if (kind === 'cc') { osc('square', 330, 140, t, 0.3, 0.1, d, { filter: { f: 1400 } }); osc('sine', 165, 70, t, 0.35, 0.3, d); noise(t, 0.2, 0.12, d, { f0: 600, q: 3 }); }
+      else if (kind === 'stack') { osc('triangle', 520, 380, t, 0.09, 0.08, d); noise(t, 0.06, 0.06, d, { f0: 3000, q: 2 }); }
+      else { osc('sawtooth', 220, 150, t, 0.22, 0.06, d, { filter: { f: 900 } }); noise(t, 0.18, 0.1, d, { type: 'lowpass', f0: 1200, f1: 300 }); }
+    },
+    resist: (t, d) => { osc('triangle', 1320, 1760, t, 0.12, 0.08, d); osc('sine', 2640, 0, t + 0.03, 0.15, 0.05, d); },
+    cleanse: (t, d) => { [0, 7, 12, 19].forEach((s, i) => osc('sine', NOTE(79 + s), 0, t + i * 0.035, 0.5, 0.07, d, { a: 0.01 })); noise(t, 0.4, 0.08, d, { type: 'highpass', f0: 6000, a: 0.05 }); },
+    fuse: (t, d) => osc('square', 1400, 1400, t, 0.05, 0.05, d, { filter: { f: 3000 } }),
+    scream: (t, d) => { osc('sawtooth', 900, 1500, t, 0.5, 0.07, d, { a: 0.05, filter: { type: 'bandpass', f: 1400, q: 4 } }); osc('sawtooth', 960, 1380, t, 0.5, 0.06, d, { a: 0.05, filter: { type: 'bandpass', f: 1500, q: 4 } }); noise(t, 0.6, 0.12, d, { f0: 2200, f1: 900, q: 1.5, a: 0.06 }); },
+    chain: (t, d) => { for (let i = 0; i < 5; i++) osc('square', 2200 + Math.random() * 800, 0, t + i * 0.035, 0.03, 0.04, d, { filter: { f: 5000 } }); noise(t, 0.2, 0.1, d, { f0: 4000, q: 2 }); },
+    tether: (t, d) => { osc('sine', 220, 180, t, 0.9, 0.12, d, { a: 0.1 }); osc('sine', 331, 270, t, 0.9, 0.06, d, { a: 0.1 }); },
+    petrify: (t, d) => { noise(t, 0.5, 0.35, d, { type: 'lowpass', f0: 900, f1: 120, q: 2 }); osc('sine', 90, 50, t, 0.4, 0.4, d); for (let i = 0; i < 6; i++) noise(t + 0.05 + i * 0.04, 0.03, 0.12, d, { f0: 2500 + i * 300, q: 4 }); },
   };
-  const LIMIT = { hit: 0.035, crit: 0.06, kill: 0.03, swing: 0.05, shoot: 0.06, coin: 0.05, block: 0.08, explode: 0.08, thunder: 0.1, hurt: 0.15, warning: 0.25 };
+  let fuseNext = 0;
+  const LIMIT = { debuff: 0.12, scream: 0.4, chain: 0.3, tether: 0.8, fuse: 0.1, hit: 0.035, crit: 0.06, kill: 0.03, swing: 0.05, shoot: 0.06, coin: 0.05, block: 0.08, explode: 0.08, thunder: 0.1, hurt: 0.15, warning: 0.25 };
   function play(name, arg, p = 0, gain = 1) {
     if (!ctx || ctx.state !== 'running') return;
     const now = ctx.currentTime;
@@ -153,6 +168,13 @@ export function createAudio(settings = {}) {
       if (ctx && ctx.state === 'running') startSeq();
     },
     setVolumes(st) { vol = { music: st.music, sfx: st.sfx }; if (ctx) { sfxBus.gain.value = vol.sfx; musicBus.gain.value = vol.music * 0.55; } },
+    /** Per-frame state sounds: the time-bomb fuse beeps faster as it burns down. */
+    tick(game) {
+      const b = game.player.debuffs?.bomb;
+      if (!(b?.t > 0) || game.status !== 'playing') { fuseNext = 0; return; }
+      const now = performance.now() / 1000;
+      if (now >= fuseNext) { play('fuse', null, 0, 0.5 + (1 - b.t / b.dur) * 0.6); fuseNext = now + Math.max(0.12, b.t / b.dur * 0.7); }
+    },
     /** Map simulation events to sounds. */
     event(ev, game) {
       const px = game.player.x;
@@ -179,6 +201,14 @@ export function createAudio(settings = {}) {
         case 'blocked': play('block', null, p(ev.x), 0.6); break;
         case 'heal': if (ev.amount > 30) play('heal'); break;
         case 'stageClear': play('victory'); break;
+        case 'debuff': play('debuff', DEBUFF[ev.id]?.cc ? 'cc' : DEBUFF[ev.id]?.max && !ev.fresh ? 'stack' : 'dot', 0, 0.8); if (ev.id === 'tether' && ev.fresh) play('tether'); break;
+        case 'debuffResist': play('resist'); break;
+        case 'cleanse': play('cleanse'); break;
+        case 'tetherBreak': play('block', null, 0, 1.2); break;
+        case 'petrified': play('petrify'); break;
+        case 'bombExplode': play('explode', null, 0, ev.dodged ? 0.6 : 1.3); if (ev.dodged) play('resist'); break;
+        case 'enemyCast': if (ev.kind === 'hook') play('chain', null, p(ev.x), 0.9); else if (ev.name === '凄厉尖啸') play('scream', null, p(ev.x), 0.9); else play('warning', null, p(ev.x), 0.7); break;
+        case 'actionBlocked': play('deny', null, 0, 0.6); break;
         default: break;
       }
     },
