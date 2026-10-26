@@ -3,6 +3,7 @@ import { clamp, dist2 } from './util.js';
 import { runProcs, procMods } from './procs.js';
 import { FACTION } from './content/factions.js';
 import { ITEM, NEUTRALS, COMPONENTS } from './content/items.js';
+import { applyStatusToPlayer } from './debuffs.js';
 
 export const TAG_COLOR = { fire: '#ff8a3a', frost: '#8fe3ff', storm: '#9ec1ff', shadow: '#c58cff', holy: '#ffe07a', nature: '#8cf06a', blade: '#f2f4f8', arcane: '#ff7ae6', earth: '#e2b06a', blood: '#ff5468' };
 const DOT_COLOR = { burn: '#ff9a4a', poison: '#7cf05a', bleed: '#ff4a5e', doom: '#b07aff' };
@@ -129,7 +130,7 @@ export function addMusou(game, amount) {
 export function healPlayer(game, amount, quiet = false) {
   const p = game.player, st = game.stats;
   if (p.dead || amount <= 0) return 0;
-  const heal = amount * (1 + st.healPower);
+  const heal = amount * (1 + st.healPower) * (p.mods?.healMult ?? 1);
   const missing = st.maxHp - p.hp;
   const applied = Math.min(missing, heal);
   p.hp += applied;
@@ -150,7 +151,8 @@ export function damagePlayer(game, amount, src = {}) {
   let dmg = amount * (game.diff.dmg) * (1 + st.dmgTaken);
   let blocked = false;
   if (src.kind !== 'dot' && game.rng.next() < st.blockChance) { dmg *= 0.3; blocked = true; runProcs(game, 'block', { src }); }
-  dmg *= 50 / (50 + st.armor);
+  dmg *= 50 / (50 + Math.max(0, st.armor * (p.mods?.armorMult ?? 1)));
+  dmg *= p.mods?.dmgTaken ?? 1;
   dmg *= 1 - st.dr;
   if (p.armorState) dmg *= 1 - st.armorReduction;
   dmg *= procMods(game, null, { incoming: true });
@@ -164,18 +166,13 @@ export function damagePlayer(game, amount, src = {}) {
   if (src.kind !== 'dot') addMusou(game, 2.5 * st.musouGainMult * (game.procIndex?.rage ? 2 : 1));
   if (!src.noReflect) runProcs(game, 'damaged', { amount: dmg, src });
   if (st.thorns > 0 && src.enemy && !src.noReflect) damageEnemy(game, src.enemy, 0, { raw: amount * st.thorns * 2, source: 'proc', noProc: true, color: '#d9a05b' });
-  if (src.status) applyPlayerStatus(game, src.status);
+  if (src.status) applyPlayerStatus(game, src.status, src);
   if (p.hp <= 0) playerDowned(game);
   return dmg;
 }
 
-export function applyPlayerStatus(game, status) {
-  const p = game.player;
-  if (p.buffCcImmune || game.stats.ccImmune) { if (status.slow) p.slowT = Math.max(p.slowT, status.slow * 0.5); return; }
-  if (status.slow) p.slowT = Math.max(p.slowT, status.slow);
-  if (status.freeze) p.frozenT = Math.max(p.frozenT, status.freeze * 0.6);
-  if (status.root) p.rootT = Math.max(p.rootT, status.root * 0.6);
-  if (status.burn) p.burnT = Math.max(p.burnT, status.burn);
+export function applyPlayerStatus(game, status, src = {}) {
+  applyStatusToPlayer(game, status, src);
 }
 
 function playerDowned(game) {

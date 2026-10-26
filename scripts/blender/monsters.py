@@ -30,7 +30,7 @@ def finish(name, arm, parts):
     return body
 
 def anim(arm, name, length, keys, loop=False):
-    """keys: {bone: [(frame, {'r': (x,y,z) deg, 'l': (x,y,z), 's': (x,y,z) or float}), ...]}"""
+    """keys: {bone: [(frame, {'r': (x,y,z) deg local, 'l': (x,y,z) world offset, 's': (x,y,z) world or float}), ...]}"""
     act = bpy.data.actions.new(name); act.use_fake_user = True
     arm.animation_data_create(); arm.animation_data.action = act
     for pb in arm.pose.bones:
@@ -40,10 +40,10 @@ def anim(arm, name, length, keys, loop=False):
         for f, k in frames:
             if 'r' in k:
                 pb.rotation_euler = [math.radians(a) for a in k['r']]; pb.keyframe_insert('rotation_euler', frame=f)
-            if 'l' in k:
-                pb.location = k['l']; pb.keyframe_insert('location', frame=f)
+            if 'l' in k:  # authored in world axes (x right, y back, z up); pose-bone local is (x, up, forward)
+                x, y, z = k['l']; pb.location = (x, z, -y); pb.keyframe_insert('location', frame=f)
             if 's' in k:
-                s = k['s']; pb.scale = (s, s, s) if isinstance(s, (int, float)) else s; pb.keyframe_insert('scale', frame=f)
+                s = k['s']; pb.scale = (s, s, s) if isinstance(s, (int, float)) else (s[0], s[2], s[1]); pb.keyframe_insert('scale', frame=f)
     act.frame_range = (0, length)
     act.use_frame_range = True
     act.use_cyclic = loop
@@ -61,20 +61,25 @@ def rot_keys(frames, a, b, n=2):
     return [(f, {'r': v}) for f, v in cyc(frames, a, b, n)]
 
 # ---------------------------------------------------------------- slime
-def slime():
-    arm = make_rig('slime', [('root', None, (0, 0, 0)), ('body', 'root', (0, 0, 0))])
-    G = (0.32, 0.85, 0.36); D = (0.12, 0.38, 0.16)
-    p = [ellipsoid('body', (0, 0, 0.6), (0.78, 0.74, 0.6), G, FLAT, 'body', seg=18, rings=12),
+def slime(name='slime', G=(0.32, 0.85, 0.36), D=(0.12, 0.38, 0.16), acid=False):
+    arm = make_rig(name, [('root', None, (0, 0, 0)), ('body', 'root', (0, 0, 0))])
+    p = [ellipsoid('body', (0, 0, 0.6), (0.78, 0.74, 0.6), G, glow(0.12) if acid else FLAT, 'body', seg=18, rings=12),
          ellipsoid('shine', (-0.28, -0.34, 0.98), (0.17, 0.09, 0.1), (0.85, 1, 0.85), FLAT, 'body', seg=8, rings=5),
          ellipsoid('crown', (0, 0.05, 1.12), (0.16, 0.16, 0.14), G, FLAT, 'body', seg=10, rings=6)]
     for s in (-1, 1):
         p += [ellipsoid(f'eye{s}', (s * 0.24, -0.6, 0.74), (0.14, 0.09, 0.18), (1, 1, 1), FLAT, 'body', seg=10, rings=6),
               ellipsoid(f'pupil{s}', (s * 0.22, -0.68, 0.72), (0.07, 0.04, 0.09), (0.05, 0.05, 0.08), FLAT, 'body', seg=8, rings=5)]
     p.append(ellipsoid('mouth', (0, -0.68, 0.47), (0.14, 0.04, 0.05), D, FLAT, 'body', seg=8, rings=4))
+    if acid:  # corrosive bubbles, angry brows and a half-dissolved skull inside the jelly
+        for i, (x, y, z, r) in enumerate(((0.42, -0.35, 0.95, 0.09), (-0.5, -0.2, 0.82, 0.07), (0.15, 0.45, 1.05, 0.11), (-0.3, 0.4, 0.98, 0.08), (0.6, 0.2, 0.62, 0.07), (-0.05, -0.2, 1.17, 0.06))):
+            p.append(ellipsoid(f'bubble{i}', (x, y, z), (r, r, r), (0.95, 1.0, 0.55), glow(0.6), 'body', seg=8, rings=5))
+        for sd in (-1, 1):
+            p.append(box(f'brow{sd}', (sd * 0.24, -0.66, 0.92), (0.24, 0.05, 0.06), D, FLAT, 'body', rot=(0, -sd * 22, 0)))
+        p.append(ellipsoid('skull', (0.1, 0.1, 0.55), (0.2, 0.18, 0.18), (0.92, 0.9, 0.78), FLAT, 'body', seg=8, rings=6))
     for i in range(7):
         a = 2 * math.pi * i / 7 + 0.3
         p.append(ellipsoid(f'drip{i}', (math.cos(a) * 0.72, math.sin(a) * 0.7, 0.1), (0.16, 0.16, 0.11), G, FLAT, 'body', seg=8, rings=5))
-    body = finish('slime', arm, p)
+    body = finish(name, arm, p)
     S = lambda z, xy: {'s': (xy, xy, z)}
     anim(arm, 'Idle', 40, {'body': [(0, S(1, 1)), (20, S(0.9, 1.06)), (40, S(1, 1))]}, True)
     anim(arm, 'Walk', 24, {'root': [(0, {'l': (0, 0, 0)}), (12, {'l': (0, 0, 0.55)}), (24, {'l': (0, 0, 0)})],
@@ -87,19 +92,18 @@ def slime():
     return arm, body
 
 # ---------------------------------------------------------------- vampire bat
-def vampire_bat():
+def vampire_bat(name='vampire_bat', F=(0.24, 0.13, 0.3), M=(0.42, 0.16, 0.36), B=(0.36, 0.22, 0.4), EYE=(1, 0.12, 0.08), shadow=False):
     Z = 1.35
-    arm = make_rig('vampire_bat', [('root', None, (0, 0, 0)), ('body', 'root', (0, 0, Z)), ('head', 'body', (0, -0.25, Z + 0.15)),
+    arm = make_rig(name, [('root', None, (0, 0, 0)), ('body', 'root', (0, 0, Z)), ('head', 'body', (0, -0.25, Z + 0.15)),
                                     ('wing_l', 'body', (0.22, 0, Z + 0.1)), ('tip_l', 'wing_l', (0.85, 0.02, Z + 0.15)),
                                     ('wing_r', 'body', (-0.22, 0, Z + 0.1)), ('tip_r', 'wing_r', (-0.85, 0.02, Z + 0.15))])
-    F = (0.24, 0.13, 0.3); M = (0.42, 0.16, 0.36); B = (0.36, 0.22, 0.4)
     p = [ellipsoid('body', (0, 0, Z), (0.27, 0.3, 0.34), F, FLAT, 'body', seg=12, rings=8),
          ellipsoid('belly', (0, -0.14, Z - 0.05), (0.18, 0.18, 0.24), B, FLAT, 'body', seg=10, rings=6),
          ellipsoid('head', (0, -0.3, Z + 0.22), (0.22, 0.21, 0.2), F, FLAT, 'head', seg=12, rings=8),
          ellipsoid('snout', (0, -0.48, Z + 0.17), (0.09, 0.07, 0.07), B, FLAT, 'head', seg=8, rings=5)]
     for s in (-1, 1):
         p += [cone(f'ear{s}', (s * 0.12, -0.28, Z + 0.36), (s * 0.4, 0.1, 1), 0.08, 0.26, F, FLAT, 'head', seg=5),
-              ellipsoid(f'eye{s}', (s * 0.1, -0.47, Z + 0.28), (0.05, 0.03, 0.04), (1, 0.12, 0.08), glow(1), 'head', seg=8, rings=5),
+              ellipsoid(f'eye{s}', (s * 0.1, -0.47, Z + 0.28), (0.05, 0.03, 0.04), EYE, glow(1), 'head', seg=8, rings=5),
               cone(f'fang{s}', (s * 0.05, -0.52, Z + 0.12), (0, -0.2, -1), 0.025, 0.09, (1, 1, 0.95), FLAT, 'head', seg=4),
               cone(f'foot{s}', (s * 0.1, 0.05, Z - 0.32), (0, 0, -1), 0.05, 0.14, B, FLAT, 'body', seg=4)]
         w, t = ('wing_l', 'tip_l') if s > 0 else ('wing_r', 'tip_r')
@@ -110,7 +114,15 @@ def vampire_bat():
               cone(f'claw{s}', (s * 0.85, 0.03, Z + 0.32), (s * 0.2, 0, 1), 0.035, 0.12, (0.9, 0.85, 0.8), FLAT, w, seg=4)]
         for k in range(3):
             p.append(cone(f'scallop{s}{k}', (s * (0.95 + k * 0.17), 0.06, Z - 0.1), (0, 0, -1), 0.07, 0.12, M, FLAT, t, seg=4))
-    body = finish('vampire_bat', arm, p)
+    if shadow:  # void core, glowing wing veins and a spiked crest
+        p.append(ellipsoid('core', (0, -0.2, Z - 0.02), (0.11, 0.08, 0.12), EYE, glow(0.9), 'body', seg=8, rings=6))
+        for s in (-1, 1):
+            w, t = ('wing_l', 'tip_l') if s > 0 else ('wing_r', 'tip_r')
+            p += [cylinder(f'vein{s}', (s * 0.3, 0.035, Z + 0.22), (s * 0.78, 0.035, Z - 0.08), 0.015, EYE, glow(0.6), w, seg=4),
+                  cylinder(f'veinTip{s}', (s * 0.9, 0.035, Z + 0.24), (s * 1.25, 0.035, Z + 0.02), 0.013, EYE, glow(0.6), t, seg=4)]
+        for k in range(3):
+            p.append(cone(f'crest{k}', (0, -0.22 + k * 0.1, Z + 0.4 - k * 0.04), (0, 0.5, 1), 0.04, 0.2 - k * 0.04, F, FLAT, 'head', seg=4))
+    body = finish(name, arm, p)
     up, down = 42, -34
     flap = lambda n: {'wing_l': rot_keys(n, (0, 0, down), (0, 0, up)), 'wing_r': rot_keys(n, (0, 0, -down), (0, 0, -up)),
                       'tip_l': rot_keys(n, (0, 0, -18), (0, 0, 25)), 'tip_r': rot_keys(n, (0, 0, 18), (0, 0, -25)),
@@ -305,7 +317,9 @@ def lava_golem():
                             'arm_l': [(0, {'r': (-170, 0, 0)}), (36, {'r': (-120, 0, 20)}), (50, {'r': (0, 0, 0)})], 'arm_r': [(0, {'r': (-170, 0, 0)}), (36, {'r': (-120, 0, -20)}), (50, {'r': (0, 0, 0)})]})
     return arm, body
 
-MONSTERS = {'slime': slime, 'vampire_bat': vampire_bat, 'gargoyle': gargoyle, 'lava_imp': lava_imp, 'thorn_treant': thorn_treant, 'boss_lava_golem': lava_golem}
+MONSTERS = {'slime': slime, 'vampire_bat': vampire_bat,
+            'acid_slime': lambda: slime('acid_slime', (0.74, 0.93, 0.18), (0.3, 0.4, 0.04), acid=True),
+            'shadow_bat': lambda: vampire_bat('shadow_bat', (0.07, 0.05, 0.11), (0.17, 0.08, 0.27), (0.24, 0.17, 0.33), (0.78, 0.38, 1.0), shadow=True), 'gargoyle': gargoyle, 'lava_imp': lava_imp, 'thorn_treant': thorn_treant, 'boss_lava_golem': lava_golem}
 
 def export_monster(mid, fn):
     reset()

@@ -34,7 +34,7 @@ test('content volume matches the published design', () => {
   for (let t = 1; t <= 5; t++) assert.equal(NEUTRALS.filter((n) => n.tier === t).length, 8);
   assert.equal(RUNES.length, 8);
   assert.equal(META_ITEMS.length, 20);
-  assert.equal(ENEMIES.length, 18);
+  assert.equal(ENEMIES.length, 33);
   assert.equal(AFFIXES.length, 10);
   assert.equal(BOSSES.length, 9); // 8 bosses; the twin generals are two units of one encounter
   assert.equal(CHAPTERS.length, 6);

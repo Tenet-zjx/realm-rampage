@@ -132,7 +132,26 @@ const DRUM = (f) => P('M10 22V44C10 52 54 52 54 44V22Z', f.fill, f) + E(32, 22, 
 const COMPASS = (f) => C(32, 32, 25, '#2a2438', f) + C(32, 32, 20, 'none', { line: f.fill }, 2) + P('M32 8L37 32L32 56L27 32Z', f.fill, f, 1.2) + P('M32 8L37 32H27Z', f.accent) + C(32, 32, 3, f.white);
 const GEARHAND = UPARROW;
 
+// v1.1 debuff / special-enemy emblems
+const BOMB = (f) => C(29, 38, 19, f.fill, f) + E(22, 31, 5.5, 3.5, f.light, 'opacity="0.7" transform="rotate(-35 22 31)"') + P('M37 17L43 11L49 17L43 23Z', f.dark, f, 1.6)
+  + S('M46 14C50 8 53 10 55 6', f.accent, 2.4) + P(star(4, 7, 2.2, 56, 6), f.white) + P(star(4, 4, 1.4, 56, 6), f.accent);
+const WEB = (f) => {
+  let spokes = '', rings = '';
+  const N = 8, pt = (i, r) => [32 + Math.cos((i / N) * Math.PI * 2 - 0.2) * r, 32 + Math.sin((i / N) * Math.PI * 2 - 0.2) * r];
+  for (let i = 0; i < N; i++) { const [x, y] = pt(i, 29); spokes += `M32 32L${x.toFixed(1)} ${y.toFixed(1)}`; }
+  for (const r of [7, 14, 21, 28]) for (let i = 0; i < N; i++) { const [x0, y0] = pt(i, r), [x1, y1] = pt(i + 1, r), [mx, my] = pt(i + 0.5, r * 0.8); rings += `${i ? '' : `M${x0.toFixed(1)} ${y0.toFixed(1)}`}Q${mx.toFixed(1)} ${my.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`; }
+  return S(spokes, f.line, 3.6) + S(rings, f.line, 3.2) + S(spokes, f.fill, 1.7) + S(rings, f.fill, 1.5) + C(32, 32, 2.5, f.fill);
+};
+const FROG = (f) => E(32, 42, 22, 14, f.fill, `stroke="${f.line}" stroke-width="2.2"`) + C(20, 26, 8.5, f.fill, f) + C(44, 26, 8.5, f.fill, f) + C(20, 26, 5, f.white) + C(44, 26, 5, f.white)
+  + C(21, 27, 2.4, '#141414') + C(45, 27, 2.4, '#141414') + S('M19 44C25 49 39 49 45 44', f.dark, 2.2) + E(24, 40, 3, 2, f.light, 'opacity="0.6"')
+  + P('M10 52L4 58L14 57L18 54Z', f.dark, f, 1.4) + P('M54 52L60 58L50 57L46 54Z', f.dark, f, 1.4) + C(30, 50, 1.6, f.dark) + C(38, 49, 1.4, f.dark);
+const NOSIGN = (f) => `<circle cx="32" cy="32" r="24" fill="none" stroke="${f.line}" stroke-width="8.5"/><circle cx="32" cy="32" r="24" fill="none" stroke="${f.fill}" stroke-width="5.5"/>`
+  + S('M15.5 15.5L48.5 48.5', f.line, 8.5) + S('M15.5 15.5L48.5 48.5', f.fill, 5.5);
+const SCREAM = (f) => P('M32 8C44 8 50 18 50 30C50 44 46 56 32 58C18 56 14 44 14 30C14 18 20 8 32 8Z', f.fill, f) + E(25, 27, 4, 6, f.dark, 'transform="rotate(12 25 27)"') + E(39, 27, 4, 6, f.dark, 'transform="rotate(-12 39 27)"')
+  + E(32, 44, 5.5, 9, f.dark) + C(25, 28, 1.6, f.accent) + C(39, 28, 1.6, f.accent) + S('M9 20C4 28 4 38 9 46M5 14C-2 26 -2 40 5 52', f.accent, 2.2, 0.85) + S('M55 20C60 28 60 38 55 46M59 14C66 26 66 40 59 52', f.accent, 2.2, 0.85);
+
 export const SHAPES = {
+  bomb: BOMB, web: WEB, frog: FROG, nosign: NOSIGN, scream: SCREAM,
   sword: SWORD, flame: FLAME, drop: DROP, bolt: BOLT, skull: SKULL, heart: HEART, shield: SHIELD, crescent: CRESCENT, wing: WING, leaf: LEAF, orb: ORB, gem: GEM, potion: POTION,
   crown: CROWN, hourglass: HOURGLASS, book: BOOK, scroll: SCROLL, boot: BOOT, arrow: ARROW, axe: AXE, hammer: HAMMER, eye: EYE, cloud: CLOUD, rock: ROCK, mountain: MOUNTAIN, crystal: CRYSTAL,
   crystals: CRYSTALS, shard: SHARD, shards: SHARDS, snowflake: SNOWFLAKE, sun: SUN, star: STAR, spark: SPARK, spiral: SPIRAL, rings: RINGS, wave: WAVE, rune: RUNE, portal: PORTAL, chain: CHAIN,

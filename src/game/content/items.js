@@ -103,7 +103,7 @@ export const CONSUMABLES = [
   K('k_decoy', '诱饵', 200, '饵', '放置诱饵 6 秒，吸引附近敌人攻击。', { act: { do: 'summon', unit: 'ally_decoy', count: 1, dur: 6, power: 1 } }),
   K('k_xp_tome', '经验之书', 500, '书', '立即获得升到下一级所需的经验。', { levelUp: 1 }),
   K('k_clarity', '清明药水', 300, '清', '所有技能冷却减少 50%。', { cooldownCut: 0.5 }),
-  K('k_holy_water', '圣水', 250, '圣', '清除负面状态并无敌 3 秒。', { buff: { dur: 3, invuln: true } }),
+  K('k_holy_water', '圣水', 250, '圣', '清除所有负面状态（含定时炸弹与噬魂链接）并无敌 3 秒。', { cleanse: true, buff: { dur: 3, invuln: true } }),
   K('k_lucky_dice', '幸运骰子', 400, '骰', '下一次升级的三选一必出稀有及以上。', { luckyDraft: 1 }),
   K('k_tango', '树之祭祀', 120, '祭', '6 秒内每秒回复 2% 生命。', { hot: 0.12, dur: 6 }),
 ];

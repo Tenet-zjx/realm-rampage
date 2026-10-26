@@ -4,6 +4,8 @@ import { damagePlayer, damageEnemy, tickEnemyStatus, emit, isElite, applyStatus 
 import { spawnProjectile } from './skills.js';
 import { runProcs } from './procs.js';
 import { inShape, dist2, wrapAngle, turnTowards, clamp } from './util.js';
+import { applyDebuff, applyStatusToPlayer, hasDebuff, hookPull } from './debuffs.js';
+import { areaDamage } from './combat.js';
 
 let UID = 1;
 export function makeEnemy(game, id, x, z, o = {}) {
@@ -20,7 +22,7 @@ export function makeEnemy(game, id, x, z, o = {}) {
     state: o.noSpawnAnim ? 'idle' : 'spawn', stateT: 0, spawnDur: o.noSpawnAnim ? 0 : boss ? 1.8 : def.clips?.spawn === 'Skeletons_Awaken_Floor' ? 1.15 : 0.6,
     atkCd: 1 + game.rng.next() * 1.5, status: {}, flash: 0, elite: !!o.elite, officer: o.officer || null, boss: !!boss, affixes: o.affixes || [], shield: 0,
     airborne: false, stagger: 0, anim: { clip: 'idle', t: game.rng.next() * 2 }, isSplit: !!(o.split || o.splitAffix), wander: game.rng.angle(), seed: game.rng.next(),
-    phase: 1, patternCd: 2, skillCd: {}, guardBroken: 0, dying: false, dead: false, deathT: 0, specialCd: 3 + game.rng.next() * 3,
+    phase: 1, patternCd: 2, skillCd: {}, guardBroken: 0, dying: false, dead: false, deathT: 0, specialCd: 3 + game.rng.next() * 3, abCd: def.ability ? def.ability.cd * (0.35 + game.rng.next() * 0.5) : 0,
   };
   if (o.split) { e.scale *= o.split.scale; e.radius *= o.split.scale; e.hp = e.maxHp = e.maxHp * o.split.hpMult; e.xp *= 0.5; }
   if (o.splitAffix) { e.affixes = e.affixes.filter((a) => a !== 'splitter'); }
@@ -59,11 +61,15 @@ function resolveHostile(game, h) {
     if (dealt && h.launch) { p.forced = { sx: p.x, sz: p.z, ex: p.x, ez: p.z, t: 0, dur: 0.45, arc: 1.4 }; }
     if (dealt && h.kb && h.owner) { const a = Math.atan2(p.x - h.x, p.z - h.z); p.forced = { sx: p.x, sz: p.z, ex: clamp(p.x + Math.sin(a) * 3, -game.arena.half, game.arena.half), ez: clamp(p.z + Math.cos(a) * 3, -game.arena.half, game.arena.half), t: 0, dur: 0.25 }; }
     if (dealt && h.owner?.affixes?.includes('vampiric')) h.owner.hp = Math.min(h.owner.maxHp, h.owner.hp + dealt * 2);
+    if (dealt && h.hook && h.owner && !h.owner.dying) hookPull(game, h.owner);
+    if (dealt && h.dispel) { const n = p.buffs.length + (p.shield > 0 ? 1 : 0); p.buffs = []; p.shield = 0; p.staticShield = 0; game.statsDirty = true; if (n) emit(game, { type: 'dispel', x: p.x, z: p.z, n }); }
     if (h.owner?.boss) game.run.bossHits++;
   }
   for (const a of game.allies) if (shape && inShape(shape, h.x, h.z, h.angle || 0, a.x, a.z, a.radius)) { a.hp -= h.dmg * 1.2; a.flash = 1; }
   game.addEffect({ kind: h.impact || 'hostileImpact', x: h.x, z: h.z, r: h.r || h.width, shape: h.kind, angle: h.angle, length: h.length, width: h.width, arc: h.arc, inner: h.inner, life: 0.5, palette: h.palette || 'danger' });
   if (h.lava) game.hazards.push({ x: h.x, z: h.z, r: h.lava.r, t: h.lava.dur, dmg: h.dmg * 0.15, tick: 0, kind: 'lava' });
+  if (h.hazard) game.hazards.push({ x: h.x, z: h.z, r: h.hazard.r, t: h.hazard.dur, dmg: h.hazard.kind === 'poison' ? h.dmg * 0.08 : 0, tick: 0.4, kind: h.hazard.kind, status: h.hazard.status, every: h.hazard.every });
+  if (h.hurtEnemies) areaDamage(game, h.x, h.z, h.r, h.hurtEnemies, { source: 'proc', noArea: true, kb: 4, launch: 3, tags: ['fire'] });
   if (h.shake) emit(game, { type: 'shake', a: h.shake });
 }
 
@@ -79,11 +85,18 @@ export function updateHostile(game, dt) {
   const p = game.player;
   for (const z of game.hazards) {
     z.t -= dt; z.tick -= dt;
-    if (z.tick <= 0 && dist2(z.x, z.z, p.x, p.z) < z.r * z.r) { z.tick = 0.5; damagePlayer(game, z.dmg, { kind: 'dot', status: z.kind === 'lava' ? { burn: 1 } : z.kind === 'frost' ? { slow: 1 } : null }); }
-    if (!z.fx) { z.fx = true; game.addEffect({ kind: z.kind === 'lava' ? 'lavaPool' : z.kind === 'frost' ? 'frostOrbHazard' : 'poisonBog', x: z.x, z: z.z, r: z.r, life: z.t, palette: 'danger' }); }
+    if (z.tick <= 0 && dist2(z.x, z.z, p.x, p.z) < z.r * z.r) {
+      z.tick = z.every || 0.5;
+      const status = z.status || (z.kind === 'lava' ? { burn: 1 } : z.kind === 'frost' ? { slow: 1 } : null);
+      if (z.dmg > 0) damagePlayer(game, z.dmg, { kind: 'dot', status });
+      else if (status && !(p.invuln > 0) && !p.dead && p.state !== 'musou') applyStatusToPlayer(game, status);
+    }
+    if (!z.fx) { z.fx = true; game.addEffect({ kind: HAZARD_FX[z.kind] || 'poisonBog', x: z.x, z: z.z, r: z.r, life: z.t, palette: 'danger' }); }
   }
   game.hazards = game.hazards.filter((z) => z.t > 0);
 }
+
+const HAZARD_FX = { lava: 'lavaPool', frost: 'frostOrbHazard', poison: 'poisonBog', web: 'webPatch', acid: 'acidPool', spore: 'sporeCloud', chrono: 'chronoField' };
 
 // ---------------------------------------------------------------- AI
 function targetOf(game, e) {
@@ -106,7 +119,8 @@ function enemyAttack(game, e, tgt) {
   const at = e.def.attack, a = e.face;
   const dmg = e.dmg * (e.buffed ? 1.25 : 1);
   if (at.projectile) {
-    const pr = spawnProjectile(game, { team: 'enemy', x: e.x, z: e.z, y: 1.2, angle: Math.atan2(tgt.x - e.x, tgt.z - e.z), speed: at.projectile.speed, range: at.range + 4, radius: at.projectile.radius, kind: at.projectile.kind, status: at.projectile.status, enemyDmg: dmg, owner: e, life: 4 });
+    const pj = at.projectile;
+    const pr = spawnProjectile(game, { team: 'enemy', x: e.x, z: e.z, y: 1.2, angle: Math.atan2(tgt.x - e.x, tgt.z - e.z), speed: pj.speed, range: at.range + 4, radius: pj.radius, kind: pj.kind, status: pj.status, enemyDmg: dmg * (pj.dmgMult || 1), owner: e, life: pj.life || 4, homing: pj.homing });
     emit(game, { type: 'enemyShoot', x: e.x, z: e.z, kind: pr.kind });
     return;
   }
@@ -123,7 +137,7 @@ function enemyAttack(game, e, tgt) {
   if (at.offset) { ox += Math.sin(a) * at.offset; oz += Math.cos(a) * at.offset; }
   const p = game.player;
   if (!tgt.ally && !tgt.crystal && inShape(shape, ox, oz, a, p.x, p.z, 0.45)) {
-    const dealt = damagePlayer(game, dmg, { x: e.x, z: e.z, enemy: e, kind: 'melee', status: at.status });
+    const dealt = damagePlayer(game, dmg, { x: e.x, z: e.z, enemy: e, kind: 'melee', status: at.statusChance && game.rng.next() > at.statusChance ? null : at.status });
     if (dealt && (at.lifesteal || e.affixes.includes('vampiric') || game.runMods?.enemyLifesteal)) e.hp = Math.min(e.maxHp, e.hp + dealt * (at.lifesteal || 1.5));
     if (dealt && p.staticShield) damageEnemy(game, e, p.staticShield, { source: 'proc', tags: ['storm'], noProc: true });
   }
@@ -150,6 +164,69 @@ function beginWindup(game, e, tgt) {
   }
 }
 
+/** Signature abilities of the special enemies. Every area has a telegraph with its exact hit geometry. */
+function tryAbility(game, e, tgt, d2) {
+  const ab = e.def.ability, p = game.player;
+  if (!ab || tgt.ally || tgt.crystal || e.status.silence || p.dead) return false;
+  e.abCd -= game.dt;
+  if (e.abCd > 0) return false;
+  if (d2 > ab.range * ab.range || (ab.minRange && d2 < ab.minRange * ab.minRange)) return false;
+  if (ab.kind === 'tether' && hasDebuff(p, 'tether')) { e.abCd = 1.5; return false; }
+  if (ab.kind === 'gaze' && game.enemies.some((o) => o !== e && o.channel?.kind === 'gaze' && o.state === 'channel')) { e.abCd = 2; return false; }
+  e.abCd = ab.cd * (0.9 + game.rng.next() * 0.2);
+  const windup = ab.windup * game.diff.telegraph;
+  e.face = Math.atan2(p.x - e.x, p.z - e.z);
+  e.state = 'cast'; e.stateT = 0; e.castDur = windup + 0.35;
+  emit(game, { type: 'enemyCast', id: e.uid, name: ab.name, kind: ab.kind, x: e.x, z: e.z });
+  if (ab.kind === 'aoe') {
+    const at = ab.at === 'player' ? { x: p.x, z: p.z } : { x: e.x, z: e.z };
+    hostileStrike(game, { kind: 'circle', x: at.x, z: at.z, r: ab.r, windup: ab.windup, dmg: e.dmg * (ab.dmg ?? 1), status: ab.status, owner: e, impact: ab.impact, palette: ab.palette, hazard: ab.hazard, dispel: ab.dispel });
+  } else if (ab.kind === 'hook') {
+    hostileStrike(game, { kind: 'line', x: e.x, z: e.z, angle: e.face, length: ab.length, width: ab.width, windup: ab.windup, dmg: e.dmg * (ab.dmg ?? 1), owner: e, hook: true, impact: 'hookThrow' });
+  } else if (ab.kind === 'tether') {
+    e.pendingTether = windup;
+    game.addEffect({ kind: 'tetherAim', follow: e.uid, life: windup + 0.05, windup, palette: 'tether' });
+  } else if (ab.kind === 'gaze') {
+    e.state = 'channel'; e.channel = { kind: 'gaze', windup, dur: windup + ab.dur };
+    game.addEffect({ kind: 'gazeCone', follow: e.uid, followFace: true, r: ab.r, arc: ab.angle, life: windup + ab.dur, windup, palette: 'danger' });
+  }
+  return true;
+}
+
+function updateChannel(game, e, dt) {
+  const p = game.player, ab = e.def.ability, c = e.channel;
+  const want = Math.atan2(p.x - e.x, p.z - e.z);
+  if (c.kind === 'gaze') {
+    if (e.stateT >= c.windup) {
+      e.face = turnTowards(e.face, want, ab.turn * dt);
+      if (!p.dead && inShape({ shape: 'arc', range: ab.r, angle: ab.angle }, e.x, e.z, e.face, p.x, p.z, 0.3)) p.gazedBy = e.uid;
+    }
+    if (e.stateT >= c.dur) endChannel(game, e);
+  } else if (c.kind === 'tether') {
+    e.face = turnTowards(e.face, want, 6 * dt);
+    if (e.stateT >= c.dur || !hasDebuff(p, 'tether') || p.debuffs.tether.src !== e.uid) endChannel(game, e);
+  }
+}
+
+function endChannel(game, e) {
+  if (e.state === 'channel') { e.state = 'idle'; e.stateT = 0; }
+  e.channel = null;
+  game.removeEffectWhere((f) => f.follow === e.uid && (f.kind === 'gazeCone' || f.kind === 'tether' || f.kind === 'tetherAim'));
+}
+
+function onEnemyDeath(game, e) {
+  const d = e.def;
+  if (e.channel || e.pendingTether) { e.pendingTether = null; endChannel(game, e); }
+  if (d.deathHazard) {
+    const h = d.deathHazard, k = e.isSplit ? 0.6 : 1;
+    game.hazards.push({ x: e.x, z: e.z, r: h.r * k, t: h.dur * k, dmg: 0, tick: 0.4, kind: h.kind, status: h.status, every: h.every });
+  }
+  if (d.deathBlast) {
+    const b = d.deathBlast;
+    hostileStrike(game, { kind: 'circle', x: e.x, z: e.z, r: b.r, windup: b.windup, dmg: e.dmg * b.dmg, impact: 'fireBurst', palette: 'fire', hurtEnemies: b.hurtEnemies, shake: 0.35 });
+  }
+}
+
 function enemySpecials(game, e, tgt, d2) {
   const def = e.def;
   e.specialCd -= game.dt;
@@ -158,7 +235,7 @@ function enemySpecials(game, e, tgt, d2) {
     e.specialCd = def.charge.cd;
     e.face = Math.atan2(tgt.x - e.x, tgt.z - e.z);
     const len = def.charge.range;
-    hostileStrike(game, { kind: 'line', x: e.x, z: e.z, angle: e.face, length: len, width: def.charge.width, windup: def.charge.windup, dmg: e.dmg * 1.3, owner: e, kb: 1 });
+    hostileStrike(game, { kind: 'line', x: e.x, z: e.z, angle: e.face, length: len, width: def.charge.width, windup: def.charge.windup, dmg: e.dmg * 1.3, owner: e, kb: 1, status: def.charge.status });
     e.state = 'charging'; e.stateT = 0; e.chargeInfo = { windup: def.charge.windup * game.diff.telegraph, speed: def.charge.speed, left: len };
     return true;
   }
@@ -189,6 +266,7 @@ function updateEnemy(game, e, dt) {
   const p = game.player;
   e.flash = Math.max(0, e.flash - dt * 5);
   e.stateT += dt;
+  if (e.dying && !e.deathFx) { e.deathFx = true; onEnemyDeath(game, e); }
   if (e.dying) { e.deathT += dt; e.y = Math.max(0, e.y + e.vy * dt); e.vy -= 30 * dt; e.x += e.vx * dt; e.z += e.vz * dt; e.vx *= 0.9; e.vz *= 0.9; if (e.deathT > (e.boss ? 3.5 : 1.25)) e.dead = true; return; }
   tickEnemyStatus(game, e, dt);
   if (e.dying) return;
@@ -205,7 +283,7 @@ function updateEnemy(game, e, dt) {
   }
   if (e.petrified > 0) { e.petrified -= dt; return; }
   if (e.state === 'spawn') { if (e.stateT >= e.spawnDur) { e.state = 'idle'; e.stateT = 0; } return; }
-  if (e.status.freeze || e.status.stun || e.status.timeStop) { if (e.state === 'windup') e.state = 'idle'; return; }
+  if (e.status.freeze || e.status.stun || e.status.timeStop) { if (e.state === 'windup') e.state = 'idle'; if (e.channel || e.pendingTether != null) { e.pendingTether = null; endChannel(game, e); e.state = 'idle'; } return; }
   if (e.stagger > 0) { e.stagger -= dt; if (e.state === 'windup' && !e.elite && !e.officer) e.state = 'idle'; return; }
   const tgt = targetOf(game, e);
   e.atkCd -= dt;
@@ -221,7 +299,20 @@ function updateEnemy(game, e, dt) {
     return;
   }
   if (e.state === 'attack') { if (e.stateT >= (e.def.attack.recover || 0.5)) { e.state = 'idle'; e.stateT = 0; } return; }
-  if (e.state === 'cast') { if (e.stateT >= 0.9) { e.state = 'idle'; e.stateT = 0; } return; }
+  if (e.state === 'channel') { updateChannel(game, e, dt); return; }
+  if (e.state === 'cast') {
+    if (e.pendingTether != null && e.stateT >= e.pendingTether) {
+      e.pendingTether = null;
+      const ab = e.def.ability;
+      if (!p.dead && !(p.invuln > 0) && p.state !== 'musou' && dist2(e.x, e.z, p.x, p.z) <= (ab.range + 1.5) ** 2 && applyDebuff(game, 'tether', ab.dur, { src: e })) {
+        e.state = 'channel'; e.stateT = 0; e.channel = { kind: 'tether', dur: ab.dur * (game.diff.debuff ?? 1) };
+        game.addEffect({ kind: 'tether', follow: e.uid, life: e.channel.dur, palette: 'tether' });
+        return;
+      }
+    }
+    if (e.stateT >= (e.castDur || 0.9)) { e.state = 'idle'; e.stateT = 0; e.castDur = 0; }
+    return;
+  }
   if (e.state === 'charging') {
     const c = e.chargeInfo;
     if (e.stateT < c.windup) return;
@@ -237,6 +328,7 @@ function updateEnemy(game, e, dt) {
   }
   const dx = tgt.x - e.x, dz = tgt.z - e.z, d2 = dx * dx + dz * dz, d = Math.sqrt(d2);
   const want = Math.atan2(dx, dz);
+  if (tryAbility(game, e, tgt, d2)) return;
   if (enemySpecials(game, e, tgt, d2)) return;
   const at = e.def.attack;
   if (e.def.archetype === 'exploder' && d < at.range) { if (e.state !== 'windup') beginWindup(game, e, tgt); return; }

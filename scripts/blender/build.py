@@ -49,6 +49,11 @@ P = {
     'twin_frost': [{'tint': (0.35, 0.6, 1.0), 'amount': 0.55}],
     'sovereign': [{'tint': (0.6, 0.45, 0.9), 'amount': 0.5}, {'val': 0.62}],
     'necro': [{'tint': (0.55, 0.9, 0.6), 'amount': 0.3}, {'val': 0.85}],
+    'hex': [{'tint': (0.72, 0.5, 0.95), 'amount': 0.45}, {'val': 0.7}],
+    'null': [{'tint': (0.62, 0.62, 0.78), 'amount': 0.55}, {'val': 0.5}],
+    'rust': [{'tint': (0.95, 0.62, 0.38), 'amount': 0.5}, {'val': 0.62}],
+    'soot': [{'val': 0.45}, {'tint': (0.85, 0.72, 0.6), 'amount': 0.25}],
+    'aeon': [{'tint': (1.0, 0.9, 0.62), 'amount': 0.4}, {'val': 1.02}],
 }
 EYE = {'red': (1.0, 0.12, 0.05), 'cyan': (0.3, 0.95, 1.0), 'orange': (1.0, 0.5, 0.05), 'blue': (0.35, 0.55, 1.0), 'gold': (1.0, 0.8, 0.2),
        'violet': (0.75, 0.3, 1.0), 'green': (0.4, 1.0, 0.3), 'yellow': (1.0, 1.0, 0.19)}
@@ -80,6 +85,18 @@ def enemies():
         'ember_archer': dict(base='SRogue', items=[('Crossbow', 'r')], tint='ember', eye='orange', acc=lambda a, h, m: acc.flame_crest(h, (1.0, 0.5, 0.1), m)[1:2]),
         'plague_shaman': dict(base='SMage', items=[('Staff', 'r')], tint='plague', eye='green', orb=(0.45, 1.0, 0.25), acc=lambda a, h, m: acc.horns(h, (0.5, 0.65, 0.35), 0.5, 1.4, m)),
         'bone_standard': dict(base='Minion', items=[('Blade', 'r')], tint='gilded', eye='gold', acc=lambda a, h, m: acc.banner(a, (0.45, 0.32, 0.2), (0.7, 0.1, 0.1), (1.0, 0.8, 0.25), m)),
+        # v1.1 special enemies (player debuffs)
+        'hex_doctor': dict(base='SMage', items=[('Staff', 'r')], tint='hex', eye='green', orb=(0.55, 1.0, 0.35),
+                           acc=lambda a, h, m: acc.mask(h, (0.62, 0.38, 0.22), (0.2, 0.75, 0.3), (0.55, 1.0, 0.35), m) + acc.feathers(h, [(0.85, 0.2, 0.2), (0.2, 0.7, 0.35), (0.95, 0.75, 0.2)], m)),
+        'nullifier': dict(base='Warrior', items=[('Blade', 'r'), ('Shield_Large_B', 'shield')], tint='null', eye='violet',
+                          acc=lambda a, h, m: acc.rune_ring(a, (0.78, 0.42, 1.0), m) + acc.shoulder_spikes(a, (0.3, 0.28, 0.38), 2, 1.0, m, plate=(0.22, 0.2, 0.3)) + acc.eye_glow(h, (0.8, 0.4, 1.0), 0.15, 0.05, m)),
+        'chain_jailer': dict(base='Warrior', items=[('Staff', 'r')], tint='rust', eye='orange', tip=lambda tip, ax, m: acc.hook_head(tip, ax, (0.5, 0.5, 0.52), (1.0, 0.55, 0.2), m),
+                             acc=lambda a, h, m: acc.chain_sash(a, (0.45, 0.45, 0.48), m) + acc.shoulder_spikes(a, (0.45, 0.42, 0.4), 1, 1.0, m, plate=(0.35, 0.3, 0.28))),
+        'bomber': dict(base='Minion', items=[], tint='soot', eye='orange',
+                       acc=lambda a, h, m: acc.bomb_pack(a, (0.45, 0.3, 0.18), (0.3, 0.3, 0.32), (0.16, 0.15, 0.17), (0.6, 0.5, 0.35), (1.0, 0.6, 0.1), m)
+                       + acc.bomb(kk.bone_head(a, 'handslot.r') + Vector((0, -0.05, 0.05)), 0.2, (0.16, 0.15, 0.17), (0.6, 0.5, 0.35), (1.0, 0.6, 0.1), m)),
+        'time_warden': dict(base='SMage', items=[('Staff', 'r')], tint='aeon', eye='cyan', tip=lambda tip, ax, m: acc.hourglass(tip, ax, (0.9, 0.72, 0.3), (0.45, 0.95, 1.0), m),
+                            acc=lambda a, h, m: acc.clock_halo(h, (1.0, 0.82, 0.4), (0.5, 0.95, 1.0), m)),
     }
 
 def tests():
@@ -129,8 +146,11 @@ def build_character(mid, d, single_material):
             else:
                 meshes.remove(o); bpy.data.objects.remove(o, do_unlink=True)
     h = head_info([o for o in meshes if o.parent_type != 'BONE'])
+    held = []  # meshes of the right-hand item (staff tips are measured on these only)
     for name, slot in d.get('items', []):
-        meshes += attach_item(src_json, ITEM(name), slot)
+        objs = attach_item(src_json, ITEM(name), slot)
+        meshes += objs
+        if slot == 'r': held += objs
     mat = base = base_material(meshes)
     img = material_image(mat)
     if d.get('tint'):
@@ -147,11 +167,11 @@ def build_character(mid, d, single_material):
         else:
             for s in o.material_slots:
                 if s.material and s.material != mat and img_key(s.material) == img_key(base): s.material = mat
-    if d.get('orb'):
-        staff = [o for o in meshes if o.vertex_groups.get('handslot.r')]
+    if d.get('orb') or d.get('tip'):
         hand = bone_head(arm, 'handslot.r')
-        tip = max((o.matrix_world @ v.co for o in staff for v in o.data.vertices), key=lambda p: (p - hand).length, default=hand)
-        meshes += acc.staff_orb(tip, d['orb'], mat)
+        tip = max((o.matrix_world @ v.co for o in held for v in o.data.vertices), key=lambda p: (p - hand).length, default=hand)
+        if d.get('orb'): meshes += acc.staff_orb(tip, d['orb'], mat)
+        if d.get('tip'): meshes += d['tip'](tip, (tip - hand).normalized(), mat)
     if d.get('acc'):
         meshes += d['acc'](arm, h, mat)
     body = next(o for o in meshes if 'Body' in o.name)
@@ -239,8 +259,8 @@ def main():
     for kind, table, single in (('heroes', heroes(), False), ('enemies', enemies(), True), ('bosses', bosses(), False), ('tests', tests() if ONLY else {}, False)):
         for mid, d in table.items():
             jobs.append((mid, (lambda k=kind, m=mid, dd=d, s=single: export_char(k, m, dd, s))))
-    import monsters
-    for mid, fn in monsters.MONSTERS.items():
+    import monsters, creatures
+    for mid, fn in {**monsters.MONSTERS, **creatures.CREATURES}.items():
         jobs.append((mid, (lambda m=mid, f=fn: monsters.export_monster(m, f))))
     for mid, fn in jobs:
         if ONLY and mid not in ONLY: continue

@@ -219,6 +219,25 @@ const ENEMY_ICONS = {
   bone_giant: ['brown', [L('skull', 32, 32, 1, 0, 'white')]], shadow_stalker: ['dark', [L('hood'), L('daggers', 32, 50, 0.36, 0, 'steel')]], ember_archer: ['orange', [L('skull', 30, 34, 0.8, 0, 'brown'), L('arrow', 46, 18, 0.4, 0, 'orange')]],
   plague_shaman: ['green', [L('skull', 32, 36, 0.8), L('drop', 32, 12, 0.3)]], bone_standard: ['gold', [L('flag')]], slime: ['green', [L('drop', 32, 34, 0.95)]], vampire_bat: ['purple', [L('bat')]], gargoyle: ['steel', [L('mask'), L('horn', 18, 14, 0.36, 0, 'white'), L('horn', 46, 14, 0.36, 0, 'white', 1)]],
   lava_imp: ['orange', [L('flame', 32, 34, 0.8), L('horn', 20, 14, 0.34, 0, 'dark'), L('horn', 44, 14, 0.34, 0, 'dark', 1)]], thorn_treant: ['nature', [L('tree')]],
+  web_spider: ['white', [L('web', 32, 32, 1, 0, 'steel'), L('spider', 32, 36, 0.7, 0, 'brown')]], venom_spider: ['green', [L('spider', 32, 34, 0.95, 0, 'dark'), L('drop', 48, 14, 0.32, 0, 'green')]],
+  soul_wraith: ['teal', [L('ghost', 30, 32, 0.95, 0, 'dark'), L('chain', 46, 46, 0.38, 0, 'teal')]], banshee: ['white', [L('scream', 32, 32, 0.95, 0, 'white')]],
+  basilisk: ['brown', [L('lizard', 32, 36, 0.95, 0, 'green'), L('eye', 46, 14, 0.36, 0, 'gold')]], frost_lizard: ['blue', [L('lizard', 32, 36, 0.95, 0, 'blue'), L('snowflake', 46, 14, 0.32, 0, 'white')]],
+  myconid: ['pink', [L('mushroom', 32, 34, 0.95, 0, 'purple'), L('spiral', 48, 14, 0.3, 0, 'green')]], dire_wolf: ['red', [L('wolf', 32, 32, 0.95, 0, 'steel'), L('drop', 48, 50, 0.3, 0, 'red')]],
+  hex_doctor: ['green', [L('mask', 30, 30, 0.9, 0, 'brown'), L('frog', 46, 46, 0.36, 0, 'green')]], nullifier: ['purple', [L('skull', 32, 34, 0.75, 0, 'steel'), L('nosign', 32, 32, 1, 0, 'purple')]],
+  chain_jailer: ['orange', [L('skull', 28, 36, 0.72, 0, 'brown'), L('hook', 46, 20, 0.42, 0, 'steel')]], bomber: ['red', [L('skull', 24, 40, 0.6, 0, 'brown'), L('bomb', 40, 26, 0.62, 0, 'dark')]],
+  time_warden: ['gold', [L('skull', 32, 38, 0.66, 0, 'white'), L('clock', 32, 15, 0.4, 0, 'blue')]], acid_slime: ['green', [L('drop', 32, 34, 0.95, 0, '#c8ff3a'), L('bubble', 47, 18, 0.34, 0, 'green')]],
+  shadow_bat: ['dark', [L('bat', 32, 32, 1, 0, 'purple'), L('eye', 32, 52, 0.28, 0, 'pink')]],
+};
+const DEBUFF_ICONS = {
+  slow: ['blue', [L('boot', 30, 34, 0.85, 0, 'steel'), L('snowflake', 47, 16, 0.34, 0, 'white')]], freeze: ['blue', [L('crystals', 32, 32, 0.95, 0, 'frost')]], root: ['green', [L('vines', 32, 32, 0.95, 0, 'nature')]],
+  burn: ['orange', [L('flame', 32, 32, 0.95, 0, 'fire')]], webbed: ['white', [L('web', 32, 32, 1, 0, 'white')]], poison: ['green', [L('drop', 32, 32, 0.9, 0, 'green'), L('skull', 32, 39, 0.34, 0, 'dark')]],
+  fear: ['purple', [L('scream', 32, 32, 0.95, 0, 'purple')]], tether: ['teal', [L('chain', 32, 32, 0.95, 0, 'teal'), L('ghost', 47, 16, 0.34, 0, 'white')]],
+  frostbite: ['blue', [L('snowflake', 32, 32, 0.9, 0, 'frost'), L('drop', 48, 48, 0.3, 0, 'blue')]], hex: ['green', [L('frog', 32, 32, 0.95, 0, 'green')]],
+  silence: ['purple', [L('rune', 32, 32, 0.78, 0, 'white'), L('nosign', 32, 32, 1, 0, 'red')]], hooked: ['orange', [L('hook', 32, 32, 0.95, 0, 'steel')]],
+  petrify: ['brown', [L('rock', 32, 34, 0.95, 0, 'steel'), L('crack', 32, 32, 0.8, 0, 'dark')]], confuse: ['pink', [L('spiral', 32, 32, 0.95, 0, 'pink')]],
+  corrode: ['green', [L('shield', 32, 30, 0.88, 0, 'steel'), L('drop', 42, 44, 0.38, 0, '#c8ff3a')]], bomb: ['red', [L('bomb', 32, 32, 0.95, 0, 'dark')]],
+  timeslow: ['gold', [L('hourglass', 32, 32, 0.9, 0, 'gold')]], bleed: ['red', [L('drop', 30, 34, 0.85, 0, 'red'), L('claw', 46, 17, 0.38, 0, 'white')]],
+  blind: ['dark', [L('eye', 32, 32, 0.9, 0, 'white'), L('nosign', 32, 32, 1, 0, 'red')]],
 };
 const NODE_ICONS = { battle: ['steel', [L('swords')]], elite: ['red', [L('doom')]], shop: ['gold', [L('coins')]], event: ['purple', [L('eye')]], rest: ['orange', [L('flame')]], treasure: ['gold', [L('chest')]], boss: ['red', [L('crown', 32, 20, 0.6, 0, 'gold'), L('skull', 32, 40, 0.6)]] };
 const EVENT_ICONS = {
@@ -233,5 +252,6 @@ export const nodeIconUrl = (type) => memo(`n:${type}`, () => { const [t, l] = NO
 export const eventIconUrl = (id) => memo(`v:${id}`, () => { const [t, l] = EVENT_ICONS[id] || ['purple', [L('eye')]]; return renderIcon(t, l); });
 export const miscIconUrl = (key) => memo(`m:${key}`, () => ({ rest: renderIcon('orange', [L('flame')]), treasure: renderIcon('gold', [L('chest')]), pause: renderIcon('blue', [L('hourglass')]), result: renderIcon('gold', [L('star')]), gold: renderIcon('gold', [L('coins')]), heal: renderIcon('red', [L('heart'), L('plus', 46, 46, 0.32, 0, 'white')]), buff: renderIcon('gold', [L('up')]) }[key] || renderIcon('steel', [L('star')])));
 export function enemyIconUrl(id) { return memo(`e:${id}`, () => { const [t, l] = ENEMY_ICONS[id] || ['red', [L('skull')]]; return renderIcon(t, l); }); }
+export function debuffIconUrl(id) { return memo(`d:${id}`, () => { const [t, l] = DEBUFF_ICONS[id] || ['red', [L('skull')]]; return renderIcon(t, l); }); }
 export function bossIconUrl() { return memo('boss', () => renderIcon('red', [L('doom')])); }
-export const ICON_COVERAGE = { skills: SKILL_ICONS, items: ITEM_ICONS, enemies: ENEMY_ICONS };
+export const ICON_COVERAGE = { skills: SKILL_ICONS, items: ITEM_ICONS, enemies: ENEMY_ICONS, debuffs: DEBUFF_ICONS };

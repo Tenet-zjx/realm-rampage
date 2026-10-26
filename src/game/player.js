@@ -6,11 +6,12 @@ import { damageEnemy, healPlayer, emit, addMusou, isElite, areaDamage } from './
 import { castAction, castSkill, spawnProjectile, hitShape, summonUnits, updateOmnislash, aimAngle, clusterPoint } from './skills.js';
 import { runProcs, addBuff } from './procs.js';
 import { inShape, dist2, wrapAngle, clamp, turnTowards } from './util.js';
+import { updateDebuffs, debuffMods, clearDebuffs, NO_MODS } from './debuffs.js';
 
 export function createPlayer(hero) {
   return {
     x: 0, z: 0, y: 0, vy: 0, face: 0, hp: 1, shield: 0, shieldT: 0, musou: 0, state: 'idle', stateT: 0, move: null, comboIndex: 0, buffer: null,
-    dodgeCd: 0, invuln: 1.2, buffInvuln: 0, buffCcImmune: 0, buffs: [], slowT: 0, frozenT: 0, rootT: 0, burnT: 0, stillT: 0, movedThisStep: 0,
+    dodgeCd: 0, invuln: 1.2, buffInvuln: 0, buffCcImmune: 0, buffs: [], debuffs: {}, mods: NO_MODS, gaze: 0, gazeImmune: 0, gazedBy: null, stillT: 0, movedThisStep: 0,
     castAnim: null, forced: null, channelT: 0, omni: null, guaranteedCrits: 0, nextHitMult: 0, spellShield: false, stealthT: 0, revives: 0,
     souls: 0, spellbladeT: 0, hurtFlash: 0, aim: null, musouState: null, armorState: false, dead: false, attackId: 0, hero: hero.id,
   };
@@ -51,7 +52,7 @@ function startMove(game, kind, index, input) {
   const p = game.player, hero = game.hero;
   const def = kind === 'light' ? hero.light[index] : hero.charges[index];
   if (!def) return false;
-  const rate = game.stats.attackRate;
+  const rate = game.stats.attackRate * (p.mods?.atk ?? 1);
   const dur = kind === 'light' ? def.dur / rate : def.dur / (1 + (rate - 1) * 0.5);
   p.face = attackFacing(game, input);
   p.state = 'attack'; p.stateT = 0;
@@ -75,6 +76,11 @@ function resolveHit(game, hit, mv) {
   if (hit.offset) { ox += Math.sin(p.face) * hit.offset; oz += Math.cos(p.face) * hit.offset; }
   if (hit.back) { ox = p.x - Math.sin(p.face) * hit.length; oz = p.z - Math.cos(p.face) * hit.length; }
   const source = mv.kind === 'light' ? 'light' : 'charge';
+  if (p.mods.miss && game.rng.next() < p.mods.miss) {
+    emit(game, { type: 'miss', x: ox + Math.sin(p.face) * 1.5, z: oz + Math.cos(p.face) * 1.5 });
+    game.addEffect({ kind: mv.def.vfx || 'slashArc', x: ox, z: oz, angle: p.face, r: shape.range || shape.r || shape.length, shape: shape.shape, width: shape.width, length: shape.length, arc: shape.angle, life: 0.32, palette: 'blind', tilt: mv.def.slash?.tilt, mirror: mv.def.mirror, kind2: mv.kind });
+    return;
+  }
   const o = { source, kb: hit.kb, launch: hit.launch, stun: hit.stun, status: hit.status, guardBreak: hit.guardBreak, critBonus: hit.critBonus, tags: hit.tags, fromX: p.x, fromZ: p.z, execute: hit.execute };
   const hits = hitShape(game, shape, ox, oz, p.face, hit.dmg, o);
   if (hits) {
@@ -163,7 +169,7 @@ function startDodge(game, input) {
   const p = game.player;
   let a = p.face + Math.PI;
   if (input.move && (input.move.x || input.move.z)) a = Math.atan2(input.move.x, input.move.z);
-  p.state = 'dodge'; p.stateT = 0; p.dodgeDir = a; p.face = a; p.move = null; p.armorState = false; p.y = 0;
+  p.state = 'dodge'; p.stateT = 0; p.dodgeDir = a; p.face = a; p.move = null; p.armorState = false; p.y = 0; p.dodgeMult = p.mods.dodgeMult;
   p.invuln = Math.max(p.invuln, game.stats.iframeTime);
   p.dodgeCd = game.stats.dodgeCd;
   p.comboIndex = 0;
@@ -278,6 +284,7 @@ export function useConsumable(game, slot) {
   if (u.heal) healPlayer(game, st.maxHp * u.heal);
   if (u.hot) addBuff(game, { id: `hot_${it.id}`, dur: u.dur || 5, hotRate: (st.maxHp * u.hot) / (u.dur || 5) });
   if (u.musou) addMusou(game, u.musou);
+  if (u.cleanse) clearDebuffs(game);
   if (u.buff) castAction(game, { do: 'buff', ...u.buff }, { source: 'skill' });
   if (u.rerolls) game.draft.rerolls += u.rerolls;
   if (u.banishes) game.draft.banishes += u.banishes;
@@ -301,16 +308,17 @@ export function updatePlayer(game, dt, input) {
   p.buffInvuln = Math.max(0, p.buffInvuln - dt);
   p.buffCcImmune = Math.max(0, p.buffCcImmune - dt);
   p.dodgeCd = Math.max(0, p.dodgeCd - dt);
-  p.slowT = Math.max(0, p.slowT - dt); p.frozenT = Math.max(0, p.frozenT - dt); p.rootT = Math.max(0, p.rootT - dt);
   p.stealthT = Math.max(0, p.stealthT - dt); p.spellbladeT = Math.max(0, p.spellbladeT - dt); p.channelT = Math.max(0, p.channelT - dt);
   if (p.comboReset > 0) { p.comboReset -= dt; if (p.comboReset <= 0 && p.state !== 'attack') p.comboIndex = 0; }
   if (p.shieldT > 0) { p.shieldT -= dt; if (p.shieldT <= 0) p.shield = 0; }
   if (p.castAnim) { p.castAnim.t += dt; if (p.castAnim.t >= p.castAnim.dur) p.castAnim = null; }
-  for (const k in game.inventory.cds) if (game.inventory.cds[k] > 0) game.inventory.cds[k] = Math.max(0, game.inventory.cds[k] - dt);
-  if (p.dead) { p.stateT += dt; return; }
+  for (const k in game.inventory.cds) if (game.inventory.cds[k] > 0) game.inventory.cds[k] = Math.max(0, game.inventory.cds[k] - dt * p.mods.cdRate);
+  if (p.dead) { p.stateT += dt; p.debuffs = {}; p.mods = NO_MODS; return; }
+  updateDebuffs(game, dt);
+  const m = p.mods = debuffMods(p);
+  p.stunned = m.stunned;
   // regen & dots
   if (st.regenPct > 0) healPlayer(game, st.maxHp * st.regenPct * dt, true);
-  if (p.burnT > 0) { p.burnT -= dt; p.burnTick = (p.burnTick || 0) - dt; if (p.burnTick <= 0) { p.burnTick = 0.5; game.damagePlayer(st.maxHp * 0.008, { kind: 'dot' }); } }
   // buffs
   let expired = false;
   for (const b of p.buffs) {
@@ -338,17 +346,22 @@ export function updatePlayer(game, dt, input) {
   if (p.state === 'musou') { updateMusou(game, dt, input); return; }
 
   const pressed = input.pressed || {};
-  // musou
-  if (pressed.musou && p.musou >= 100 && p.frozenT <= 0) { startMusou(game); return; }
+  // musou (breaks crowd control)
+  if (pressed.musou && p.musou >= 100) { if (clearDebuffs(game, { ccOnly: true })) emit(game, { type: 'banner', text: '无双挣脱', sub: '解除所有控制', style: 'combo' }); p.stunned = false; startMusou(game); return; }
+  const blocked = (what) => { if (game.time - (p.blockedAt || -9) > 0.6) { p.blockedAt = game.time; emit(game, { type: 'actionBlocked', what, x: p.x, z: p.z }); } };
   // skills
-  for (let i = 0; i < game.skills.slots.length; i++) if (pressed[`skill${i}`] && game.skills.slots[i]) { if (castSkill(game, game.skills.slots[i])) { if (p.state === 'attack') { p.state = 'idle'; p.move = null; } } }
-  for (let i = 0; i < 3; i++) if (pressed[`item${i}`]) { const slot = game.activeItemSlots()[i]; if (slot != null) useItemActive(game, slot); }
+  for (let i = 0; i < game.skills.slots.length; i++) if (pressed[`skill${i}`] && game.skills.slots[i]) {
+    if (m.noCast || m.stunned) { blocked(m.stunned ? 'stun' : 'cast'); continue; }
+    if (castSkill(game, game.skills.slots[i])) { if (p.state === 'attack') { p.state = 'idle'; p.move = null; } }
+  }
+  for (let i = 0; i < 3; i++) if (pressed[`item${i}`]) { if (m.noCast || m.stunned) { blocked('item'); continue; } const slot = game.activeItemSlots()[i]; if (slot != null) useItemActive(game, slot); }
   for (let i = 0; i < 4; i++) if (pressed[`belt${i}`]) useConsumable(game, i);
   // dodge
-  if (pressed.dodge && p.dodgeCd <= 0 && p.frozenT <= 0 && p.rootT <= 0 && p.state !== 'dodge') startDodge(game, input);
+  if (pressed.dodge && (m.stunned || m.noDodge || m.fear)) blocked('dodge');
+  else if (pressed.dodge && p.dodgeCd <= 0 && p.state !== 'dodge') startDodge(game, input);
   if (p.state === 'dodge') {
     p.stateT += dt;
-    const D = 0.34, dist = 6.4;
+    const D = 0.34, dist = 6.4 * (p.dodgeMult || 1);
     const sp = (dist / D) * (1 - p.stateT / D) * 2 * dt;
     tryMove(game, Math.sin(p.dodgeDir) * sp, Math.cos(p.dodgeDir) * sp);
     if (p.stateT >= D) { p.state = 'idle'; p.stateT = 0; }
@@ -356,10 +369,22 @@ export function updatePlayer(game, dt, input) {
     if (pressed.heavy) p.buffer = { type: 'heavy', at: game.time };
     return;
   }
-  if (p.frozenT > 0) return;
+  if (m.stunned) { p.state = 'idle'; p.buffer = null; return; }
+  if (m.fear) { // flee from the source, no attacks
+    const src = game.enemies.find((e) => e.uid === m.fear.src);
+    const fx = src ? src.x : m.fear.sx ?? p.x - Math.sin(p.face), fz = src ? src.z : m.fear.sz ?? p.z - Math.cos(p.face);
+    const a = Math.atan2(p.x - fx, p.z - fz) + Math.sin(game.time * 5) * 0.35;
+    const sp = st.speed * 0.85 * m.move * dt;
+    tryMove(game, Math.sin(a) * sp, Math.cos(a) * sp);
+    p.face = turnTowards(p.face, a, 12 * dt); p.state = 'move'; p.move = null; p.buffer = null;
+    return;
+  }
   // attacks
-  if (pressed.light) p.buffer = { type: 'light', at: game.time };
-  if (pressed.heavy) p.buffer = { type: 'heavy', at: game.time };
+  if ((pressed.light || pressed.heavy) && m.noAttack) blocked('attack');
+  else {
+    if (pressed.light) p.buffer = { type: 'light', at: game.time };
+    if (pressed.heavy) p.buffer = { type: 'heavy', at: game.time };
+  }
   if (p.state === 'attack') { updateAttack(game, dt, input); if (p.state === 'attack') return; }
   const buf = p.buffer && game.time - p.buffer.at < 0.4 ? p.buffer : null;
   if (buf) {
@@ -368,9 +393,10 @@ export function updatePlayer(game, dt, input) {
     if (buf.type === 'heavy') { const n = p.comboReset > 0 && p.comboIndex > 0 ? Math.min(chargeLimit(game) - 1, p.comboIndex) : 0; startMove(game, 'charge', n, input); return; }
   }
   // locomotion
-  const mx = input.move?.x || 0, mz = input.move?.z || 0;
-  if ((mx || mz) && p.rootT <= 0) {
-    const speed = st.speed * (p.slowT > 0 ? 0.6 : 1) * (p.channelT > 0 ? 0.45 : 1);
+  const inv = m.invert ? -1 : 1;
+  const mx = (input.move?.x || 0) * inv, mz = (input.move?.z || 0) * inv;
+  if ((mx || mz) && !m.rooted) {
+    const speed = st.speed * m.move * (p.channelT > 0 ? 0.45 : 1);
     tryMove(game, mx * speed * dt, mz * speed * dt);
     p.face = turnTowards(p.face, Math.atan2(mx, mz), 14 * dt);
     p.state = 'move'; p.stillT = 0;

@@ -1,4 +1,4 @@
-// Dev-only icon gallery: /icons.html?set=skills|items|misc
+// Dev-only icon gallery: /icons.html?set=skills|items|misc|threats
 import '../ui/style.css';
 import { DRAFTABLE } from '../game/content/skills.js';
 import { ALL_ITEMS, META_ITEMS, RUNES } from '../game/content/items.js';
@@ -6,7 +6,8 @@ import { HEROES } from '../game/content/heroes.js';
 import { FACTIONS } from '../game/content/factions.js';
 import { ENEMIES } from '../game/content/enemies.js';
 import { NODE_TYPES, EVENTS } from '../game/content/stages.js';
-import { skillIconUrl, itemIconUrl, heroIconUrl, factionIconUrl, enemyIconUrl, nodeIconUrl, eventIconUrl } from '../ui/icons.js';
+import { skillIconUrl, itemIconUrl, heroIconUrl, factionIconUrl, enemyIconUrl, nodeIconUrl, eventIconUrl, debuffIconUrl } from '../ui/icons.js';
+import { DEBUFFS } from '../game/content/debuffs.js';
 import { RARITY } from '../game/content/rarities.js';
 
 const set = new URLSearchParams(location.search).get('set') || 'skills';
@@ -20,5 +21,9 @@ if (set === 'misc') {
   for (const e of ENEMIES) add(enemyIconUrl(e.id), e.name);
   for (const k of Object.keys(NODE_TYPES)) add(nodeIconUrl(k), NODE_TYPES[k].name);
   for (const e of EVENTS) add(eventIconUrl(e.id), e.name);
+}
+if (set === 'threats') {
+  for (const e of ENEMIES.filter((x) => x.special)) add(enemyIconUrl(e.id), e.name, '#ff6a4a');
+  for (const d of DEBUFFS) add(debuffIconUrl(d.id), d.name, d.color);
 }
 window.__viewerReady = true;

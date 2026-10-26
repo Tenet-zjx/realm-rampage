@@ -133,21 +133,35 @@ function spawnPoint(game, near) {
   return { x: clamp(p.x + 20, -half, half), z: clamp(p.z, -half, half) };
 }
 
-function pickEnemy(game) {
+// Special (debuff) enemies are capped per squad and on the field so their effects stay readable.
+function aliveCounts(game) {
+  const n = {};
+  for (const e of game.enemies) if (!e.dying && e.def.special) n[e.id] = (n[e.id] || 0) + 1;
+  return n;
+}
+
+function pickEnemy(game, counts = aliveCounts(game), specials = true) {
   const table = game.spawnTable;
   const t = game.mode === 'adventure' ? game.stageTime + (game.nodeDepth || 0) * 30 : (game.wave || 1) * 25;
-  const rows = table.filter((r) => r[1] <= t);
+  let rows = table.filter((r) => r[1] <= t && (!ENEMY[r[0]]?.special || (specials && (counts[r[0]] || 0) < (ENEMY[r[0]].maxAlive ?? 99))));
+  if (!rows.length) rows = table.filter((r) => !ENEMY[r[0]]?.special);
+  if (!rows.length) return 'skel_minion';
   return game.rng.weighted(rows, (r) => r[2])[0];
 }
 
 function spawnSquad(game, size, cx, cz) {
   const center = cx != null ? { x: cx, z: cz } : spawnPoint(game);
-  const kind = pickEnemy(game);
+  const counts = aliveCounts(game);
+  const kind = pickEnemy(game, counts);
+  const lead = ENEMY[kind];
+  let leadN = 0;
   const eliteChance = 0.035 * game.diff.elite * (1 + (game.runMods?.elite || 0)) * (game.mode === 'adventure' ? 1 + (game.nodeDepth || 0) * 0.1 : 1 + (game.wave || 1) * 0.04);
   for (let i = 0; i < size; i++) {
     if (game.enemies.length >= game.caps.enemies) break;
     const a = game.rng.angle(), r = Math.sqrt(game.rng.next()) * (1.5 + size * 0.18);
-    const id = i < size * 0.7 ? kind : pickEnemy(game);
+    let id = i < size * 0.7 && (!lead?.special || (leadN < (lead.squadMax ?? 99) && (counts[kind] || 0) < (lead.maxAlive ?? 99))) ? kind : pickEnemy(game, counts, false);
+    if (id === kind) leadN++;
+    if (ENEMY[id]?.special) counts[id] = (counts[id] || 0) + 1;
     const elite = game.rng.next() < eliteChance;
     const [lo, hi] = game.diff.affixes;
     addEnemy(game, id, center.x + Math.sin(a) * r, center.z + Math.cos(a) * r, elite ? { elite: true, affixes: rollAffixes(game, game.rng.int(lo, hi)) } : {});

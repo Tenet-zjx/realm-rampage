@@ -130,8 +130,8 @@
   },
   "necromancer": {
    "file": "heroes/necromancer.glb",
-   "bytes": 259952,
-   "sha256": "ebdd13d9ae4d3ab503b62a148d6c8d4166ece44ef726698cc94d8f3512dba30c",
+   "bytes": 259956,
+   "sha256": "07f33449f6d46470b5cb73897e3b85f93bf04f4967b0290546b70b134373f422",
    "triangles": 6451,
    "skins": [
     {
@@ -254,8 +254,8 @@
   },
   "skel_mage": {
    "file": "enemies/skel_mage.glb",
-   "bytes": 200004,
-   "sha256": "904ac82c377102569e7970431a9c1d5095035729afc58b2dec6d6b42f8b88558",
+   "bytes": 199988,
+   "sha256": "ffa523c9e73e574b72dd5497e514203416e7b9834744600aaa5c241dcd64e329",
    "triangles": 5939
   },
   "blood_berserker": {
@@ -266,8 +266,8 @@
   },
   "frost_wizard": {
    "file": "enemies/frost_wizard.glb",
-   "bytes": 225244,
-   "sha256": "1021b5de8970dbc2ba825d1861ab39cba9d1db1566d58b6f7411cd5627b57c07",
+   "bytes": 225236,
+   "sha256": "5fd522d38d538273737cdbcd8669cdb5f82f5a96f09262c73f1c2a22e48dc8cb",
    "triangles": 5993
   },
   "hellfire_skull": {
@@ -302,8 +302,8 @@
   },
   "plague_shaman": {
    "file": "enemies/plague_shaman.glb",
-   "bytes": 226048,
-   "sha256": "5821effa504da2277480cb71879dbd12be399f93d588746850829cc5996bbf10",
+   "bytes": 226036,
+   "sha256": "91fad5febdb6deeea8aeefbf401d45a5240cc3e2cbb8d9961d05b1bc6c8b8edf",
    "triangles": 6063
   },
   "bone_standard": {
@@ -320,8 +320,8 @@
   },
   "boss_frost_lich": {
    "file": "bosses/boss_frost_lich.glb",
-   "bytes": 232724,
-   "sha256": "1e4b45f8bcede54314af3bf5cab36f03d8d2da479c08725297d9a8d3b9201843",
+   "bytes": 232716,
+   "sha256": "9a5b241b8b08ae4a0d12b5083b9091db37f475036b32287417f558f0dee03c4b",
    "triangles": 6161
   },
   "boss_fallen_knight": {
@@ -351,13 +351,13 @@
   "boss_bone_sovereign": {
    "file": "bosses/boss_bone_sovereign.glb",
    "bytes": 277160,
-   "sha256": "1943d9c98e3d2021cd75a0b29367109c9d3241449b394a5893b7c70d18255d92",
+   "sha256": "09f59436344a98b86f01bb3f23d6f1bc9d0daefeba9946cd2629854b05778923",
    "triangles": 7515
   },
   "slime": {
    "file": "monsters/slime.glb",
-   "bytes": 68764,
-   "sha256": "28f6549c68bf6d899f6620f16f834092a5940bcf4f6b293c7aa7bbcf83b5f937",
+   "bytes": 68760,
+   "sha256": "e397ddf675adf649febdf62518607e280139150508c44ef0336e13113d5bc692",
    "triangles": 1384,
    "clips": [
     "Attack",
@@ -370,8 +370,8 @@
   },
   "vampire_bat": {
    "file": "monsters/vampire_bat.glb",
-   "bytes": 76676,
-   "sha256": "6a3ab20e89a78a0b71aae83c17b8bc3b99b5533005d5ea72a94c0084f5596c2d",
+   "bytes": 77300,
+   "sha256": "c5df112e42a1b8dbeb013d9a9142b94046516243e89b54f38ee7d1fab1b6225f",
    "triangles": 892,
    "clips": [
     "Attack",
@@ -384,8 +384,8 @@
   },
   "gargoyle": {
    "file": "monsters/gargoyle.glb",
-   "bytes": 129984,
-   "sha256": "f93cc908c66cf6a8f94fc3e5af4b9bf3322a932515c7cb40d75083ab22f628be",
+   "bytes": 130004,
+   "sha256": "f0a60f79d1f39b606bf1162ed71128221a1197f7a1082bfbde089781dcfcb205",
    "triangles": 1618,
    "clips": [
     "Attack",
@@ -398,8 +398,8 @@
   },
   "lava_imp": {
    "file": "monsters/lava_imp.glb",
-   "bytes": 76776,
-   "sha256": "155fb597a2fdea5dcf8bb354d927498145a157441bf215ba3f32d1eb64289f31",
+   "bytes": 75840,
+   "sha256": "84a1550c5a54f1719fe5c7bd61d8cb46ccaccc4688258838a2212ff9bba69227",
    "triangles": 822,
    "clips": [
     "Attack",
@@ -412,8 +412,8 @@
   },
   "thorn_treant": {
    "file": "monsters/thorn_treant.glb",
-   "bytes": 116860,
-   "sha256": "a81a3c6b88cab71c2ed9ce7d334c2e05c99b24d5aced90c3d14be3f91a848c62",
+   "bytes": 116872,
+   "sha256": "9ffbfa35d307191fb69c08c7f0c41d05b87ee5470a14ccc773ed6be1b7028627",
    "triangles": 1780,
    "clips": [
     "Attack",
@@ -426,8 +426,8 @@
   },
   "boss_lava_golem": {
    "file": "bosses/boss_lava_golem.glb",
-   "bytes": 115164,
-   "sha256": "dcf75705ef810f56c74e0c83ab5136a3a8d294f8f7b5d5e27647611e35f610f6",
+   "bytes": 114772,
+   "sha256": "bd2dd951963347aa079a65e2f8d68d1e020735083a970eb73d0e5bd0e19b6f82",
    "triangles": 1288,
    "clips": [
     "Attack",
@@ -439,7 +439,185 @@
     "Spawn",
     "Walk"
    ]
+  },
+  "hex_doctor": {
+   "file": "enemies/hex_doctor.glb",
+   "bytes": 235532,
+   "sha256": "48575cd8e6763165c7131328f3e28e64084412ff4de984d028362206109bcb53",
+   "triangles": 6301
+  },
+  "nullifier": {
+   "file": "enemies/nullifier.glb",
+   "bytes": 260980,
+   "sha256": "dd35625197d9eee661d602bed225bba48b0a27eb066cf6f5e68a6f3141133270",
+   "triangles": 6631
+  },
+  "chain_jailer": {
+   "file": "enemies/chain_jailer.glb",
+   "bytes": 311364,
+   "sha256": "a22c61e53ab19a4dd432e46712d93caa2698b79957e22b570c162620c3e309fa",
+   "triangles": 8049
+  },
+  "bomber": {
+   "file": "enemies/bomber.glb",
+   "bytes": 272536,
+   "sha256": "c3738eda3d2bc3597c2c32de749820de75385f38bb08aa13ea0ca7a2e777e8dd",
+   "triangles": 7156
+  },
+  "time_warden": {
+   "file": "enemies/time_warden.glb",
+   "bytes": 246996,
+   "sha256": "3b7d8ba39ea92680ed987e2a749e71bb50f1428b5e567eca0f57389d6cf9650f",
+   "triangles": 6539
+  },
+  "acid_slime": {
+   "file": "monsters/acid_slime.glb",
+   "bytes": 88040,
+   "sha256": "0aa5cce182328f0f447b5ff814eb76511c226faed2b80b0a4d36ca79a8aaac63",
+   "triangles": 1872,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "shadow_bat": {
+   "file": "monsters/shadow_bat.glb",
+   "bytes": 83156,
+   "sha256": "03b1ab0e1fc78579aa879b930d44978e01b367b086c6787d65d1ca65a24731c6",
+   "triangles": 1038,
+   "clips": [
+    "Attack",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "web_spider": {
+   "file": "monsters/web_spider.glb",
+   "bytes": 160692,
+   "sha256": "84401e1f6c7d84baf8f08c6f567c083e1912f469a68c62691abf1adba27a2d70",
+   "triangles": 2576,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "venom_spider": {
+   "file": "monsters/venom_spider.glb",
+   "bytes": 164132,
+   "sha256": "192d43f8fde4bfae94f3d95455ee0ce6ccbcb2b843a6a60f2757880f2f97449a",
+   "triangles": 2688,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "soul_wraith": {
+   "file": "monsters/soul_wraith.glb",
+   "bytes": 109268,
+   "sha256": "cc2cb09a856739dd977f9b3e1ca48344797052dc6d6e1f1d153c9778b87fb21f",
+   "triangles": 1642,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "banshee": {
+   "file": "monsters/banshee.glb",
+   "bytes": 105544,
+   "sha256": "c1cf2bdd614de89956baa3b63e5a2846e6d11bd28fa24328d5e1dc42544018bd",
+   "triangles": 1492,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "basilisk": {
+   "file": "monsters/basilisk.glb",
+   "bytes": 134236,
+   "sha256": "562ed6c49d3e062e005f7bef87d6c12a214b86f1a194e2579eea362de21b7872",
+   "triangles": 1666,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "frost_lizard": {
+   "file": "monsters/frost_lizard.glb",
+   "bytes": 128596,
+   "sha256": "790a4971d471e4f2ef574cecd918d197708c6a3a39df8bdb831c2b663ec70bdf",
+   "triangles": 1538,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "myconid": {
+   "file": "monsters/myconid.glb",
+   "bytes": 117036,
+   "sha256": "f426f2488299ed319bae8fffdabc08279cb145b38e158ed03a0f3be747b27922",
+   "triangles": 1920,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
+  },
+  "dire_wolf": {
+   "file": "monsters/dire_wolf.glb",
+   "bytes": 109708,
+   "sha256": "aa0caac1e422118fee4582ad3bebbd2dcd85935d984af92567aa62822ec8345e",
+   "triangles": 1234,
+   "clips": [
+    "Attack",
+    "Cast",
+    "Death",
+    "Hit",
+    "Idle",
+    "Spawn",
+    "Walk"
+   ]
   }
  },
- "generated": "2026-10-19T21:30:24"
+ "generated": "2026-10-26T13:29:15"
 }

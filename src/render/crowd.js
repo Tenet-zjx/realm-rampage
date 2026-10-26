@@ -5,7 +5,7 @@ import { AFFIX } from '../game/content/enemies.js';
 // Crowd renderer: one InstancedMesh per enemy/ally model, skinned on the GPU from baked clip textures.
 const KK_CLIPS = ['Idle_Combat', 'Idle_B', 'Idle', 'Walking_D_Skeletons', 'Walking_A', 'Walking_B', 'Running_C', 'Running_A', '1H_Melee_Attack_Chop', '2H_Melee_Attack_Chop',
   'Dualwield_Melee_Attack_Chop', 'Dualwield_Melee_Attack_Stab', 'Dualwield_Melee_Attack_Slice', '1H_Melee_Attack_Stab', '1H_Ranged_Shoot', 'Spellcast_Shoot', 'Spellcast_Summon', 'Spellcast_Raise',
-  'Hit_A', 'Hit_B', 'Death_C_Skeletons', 'Death_A', 'Death_B', 'Skeletons_Awaken_Floor', 'Jump_Idle', 'Taunt', 'Cheer', 'Blocking'];
+  'Hit_A', 'Hit_B', 'Death_C_Skeletons', 'Death_A', 'Death_B', 'Skeletons_Awaken_Floor', 'Jump_Idle', 'Taunt', 'Cheer', 'Blocking', 'Spellcast_Long'];
 const LOOP = new Set(['Idle_Combat', 'Idle_B', 'Idle', 'Walking_D_Skeletons', 'Walking_A', 'Walking_B', 'Running_C', 'Running_A', 'Jump_Idle', 'Blocking', 'Walk']);
 const HIT_FRAC = 0.48; // fraction of an attack clip where the blow lands
 
@@ -75,7 +75,8 @@ export function createCrowdRenderer(scene, assets, { capacity = 380 } = {}) {
     else if (ent.stagger > 0) { clip = ent.uid % 2 ? clips.hit : (clips.hit2 || clips.hit); loop = false; t = (0.3 - ent.stagger) * 2.2; }
     else if (state === 'windup') { clip = clips.attack; loop = false; t = (ent.stateT / Math.max(0.1, ent.windupDur || 0.5)) * clipLen(g, clip) * HIT_FRAC; }
     else if (state === 'attack') { clip = clips.attack; loop = false; t = clipLen(g, clip) * HIT_FRAC + ent.stateT * 1.3; }
-    else if (state === 'cast') { clip = clips.cast || clips.attack; loop = false; t = ent.stateT * 1.2; }
+    else if (state === 'cast') { clip = clips.cast || clips.attack; loop = false; t = Math.min(ent.stateT / Math.max(0.3, ent.castDur || 0.9), 1) * clipLen(g, clips.cast || clips.attack) * 0.62; }
+    else if (state === 'channel') { clip = clips.cast || clips.attack; loop = false; t = clipLen(g, clip) * (0.5 + Math.sin(ent.stateT * 6) * 0.04); }
     else if (state === 'charging') { clip = clips.run || clips.move; speed = 1.8; }
     else if (state === 'run') { clip = clips.run || clips.move; speed = 1.1; }
     else if (state === 'move') { clip = clips.move; speed = Math.max(0.7, (ent.speed || ent.def.speed || 3) / 2.6); }

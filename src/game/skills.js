@@ -2,6 +2,7 @@
 import { SKILL } from './content/skills.js';
 import { ALLIES } from './content/enemies.js';
 import { damageEnemy, areaDamage, applyStatus, healPlayer, damagePlayer, emit, isElite } from './combat.js';
+import { clearDebuffs } from './debuffs.js';
 import { runProcs, addBuff } from './procs.js';
 import { inShape, dist2, wrapAngle, DEG, clamp } from './util.js';
 
@@ -111,7 +112,7 @@ export function castSkill(game, id, { free = false } = {}) {
   const p = game.player, def = SKILL[id], owned = game.skills.owned.get(id);
   if (!def || !owned) return false;
   if (!free && owned.cd > 0) return false;
-  if (p.dead || p.frozenT > 0 || p.state === 'musou' || p.state === 'omnislash') return false;
+  if (p.dead || p.mods?.stunned || p.mods?.noCast || p.state === 'musou' || p.state === 'omnislash') return false;
   const act = scaleAction(def.act, def.up, owned.lv, game.stats);
   const angle = aimAngle(game);
   p.face = angle;
@@ -312,7 +313,7 @@ export function castAction(game, act, ctx = {}) {
       if (act.shield) { p.shield = Math.max(p.shield, st.maxHp * act.shield); p.shieldT = dur; }
       if (act.stealth) p.stealthT = dur;
       if (act.nextHit) p.nextHitMult = act.nextHit;
-      if (act.stats?.ccImmune) p.buffCcImmune = Math.max(p.buffCcImmune, dur);
+      if (act.stats?.ccImmune) { p.buffCcImmune = Math.max(p.buffCcImmune, dur); clearDebuffs(game, { ccOnly: true }); }
       if (act.vfx) game.addEffect({ kind: act.vfx, follow: 'player', life: dur, palette: c.palette });
       game.statsDirty = true;
       break;
@@ -457,10 +458,10 @@ export function updateSkillEntities(game, dt) {
   // cooldowns + autos
   for (const [id, s] of game.skills.owned) {
     const def = SKILL[id];
-    if (s.cd > 0) s.cd = Math.max(0, s.cd - dt);
+    if (s.cd > 0) s.cd = Math.max(0, s.cd - dt * (p.mods?.cdRate ?? 1));
     if (def.kind !== 'auto' || def.act.do === 'orbit') continue;
     if (def.act.onlyMoving && p.movedThisStep < 0.02) continue;
-    s.timer = (s.timer ?? 0.5) - dt;
+    s.timer = (s.timer ?? 0.5) - dt * (p.mods?.cdRate ?? 1);
     if (s.timer <= 0 && !p.dead) {
       s.timer = Math.max(0.1, skillCooldown(game, def));
       const act = scaleAction(def.act, def.up, s.lv, st);
