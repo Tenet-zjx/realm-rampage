@@ -20,6 +20,7 @@ export function patchCharacterMaterial(material, { glow = 2.4, rim = 0.35, rimCo
     uFlash: { value: new THREE.Vector4(1, 1, 1, 0) },      // rgb + amount
     uTint: { value: new THREE.Vector4(1, 1, 1, 0) },       // status tint rgb + amount (freeze, burn, poison)
     uDissolve: { value: 0 },
+    uStone: { value: 0 },                                 // petrify: desaturated, cracked stone
     uGlow: { value: glow },
     uRim: { value: new THREE.Vector4(...new THREE.Color(rimColor).toArray(), rim) },
   };
@@ -29,10 +30,17 @@ export function patchCharacterMaterial(material, { glow = 2.4, rim = 0.35, rimCo
     Object.assign(shader.uniforms, uniforms);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-uniform vec4 uFlash; uniform vec4 uTint; uniform float uDissolve; uniform float uGlow; uniform vec4 uRim;
+uniform vec4 uFlash; uniform vec4 uTint; uniform float uDissolve; uniform float uGlow; uniform vec4 uRim; uniform float uStone;
 float rrHash( vec3 p ) { p = fract( p * 0.3183099 + 0.1 ); p *= 17.0; return fract( p.x * p.y * p.z * ( p.x + p.y + p.z ) ); }`)
       .replace('#include <color_fragment>', COLOR_CHUNK + `
-  diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * uTint.rgb * 1.4, uTint.a );`)
+  diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * uTint.rgb * 1.4, uTint.a );
+  if ( uStone > 0.0 ) {
+    float rrL = dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) );
+    float rrC = step( 0.93, rrHash( floor( vViewPosition * 7.0 ) ) );
+    vec3 rrS = vec3( 0.62, 0.58, 0.52 ) * ( 0.55 + rrL * 0.8 ) * ( 1.0 - rrC * 0.45 );
+    diffuseColor.rgb = mix( diffuseColor.rgb, rrS, uStone );
+    rrGlow *= 1.0 - uStone;
+  }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
   totalEmissiveRadiance += diffuseColor.rgb * rrGlow * uGlow;
   float rrRim = pow( 1.0 - saturate( dot( normalize( vViewPosition ), normal ) ), 3.0 );

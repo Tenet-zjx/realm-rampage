@@ -145,6 +145,15 @@ export function createVfx(scene, { quality = 'high' } = {}) {
   R.wave = (f, pp) => waveFx(f, pp, {});
   R.judgement = (f) => { const p2 = P('holy'); pillar(f.x + Math.sin(f.angle) * 1.5, f.z + Math.cos(f.angle) * 1.5, f.r * 0.6, 10, p2, 0.6); R.nova({ x: f.x + Math.sin(f.angle) * 1.5, z: f.z + Math.cos(f.angle) * 1.5, r: f.r }, p2, { shape: 4, count: 50 }); };
   R.quake2 = R.quake;
+  // v1.1 special-enemy attacks
+  R.venomSplash = (f) => { const p2 = P('poison'); burst(f.x, 0.6, f.z, p2, { count: 34, speed: f.r * 3, up: 6, gravity: 16, size: 0.38 }); smokePuff(f.x, 0.6, f.z, col('#3a7a20'), { count: 8, size: 1.6, speed: f.r }); decalOnce(f, P('acid'), { type: 0, life: 1.4, r: f.r, alpha: 0.55 }); flash(f.x, 1, f.z, p2, 22); };
+  R.fearScream = (f) => { const p2 = P('shadow'); for (let i = 0; i < 3; i++) later(i * 0.1, () => shock(f.x, 1.5, f.z, f.r * (0.55 + i * 0.22), p2, 0.5, 0.55)); burst(f.x, 1.7, f.z, p2, { count: 34, speed: f.r * 2.2, up: 0.6, shape: 5, size: 0.65, gravity: 0 }); smokePuff(f.x, 1.2, f.z, col('#24143a'), { count: 10, size: 1.8, speed: f.r }); decalOnce(f, p2, { type: 7, life: 0.8, r: f.r, alpha: 0.75 }); flash(f.x, 2, f.z, p2, 35, 0.3, f.r * 2); };
+  R.sporeBlast = (f) => { const p2 = P('spore'); smokePuff(f.x, 0.9, f.z, col('#b050b8'), { count: 16, size: 2.2, speed: f.r * 1.3, up: 1.5 }); burst(f.x, 0.8, f.z, p2, { count: 40, speed: f.r * 2, up: 3, shape: 3, size: 0.3, gravity: 1 }); shock(f.x, 0.3, f.z, f.r, p2, 0.45, 0.8); flash(f.x, 1, f.z, p2, 20); };
+  R.nullBurst = (f) => { const p2 = P('arcane'); shock(f.x, 0.4, f.z, f.r, p2, 0.45, 1); decalOnce(f, p2, { type: 5, life: 0.9, r: f.r, alpha: 1, spin: -1 }); burst(f.x, 1, f.z, p2, { count: 30, speed: f.r * 2.5, up: 2, shape: 4 }); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; arc(f.x, 1.3, f.z, f.x + Math.sin(a) * f.r, 0.3, f.z + Math.cos(a) * f.r, p2, 0.25, 0.12); } flash(f.x, 1.5, f.z, p2, 40, 0.25); };
+  R.chronoBurst = (f) => { const p2 = P('chrono'); decalOnce(f, p2, { type: 9, life: 0.8, r: f.r, alpha: 0.7, spin: 1 }); shock(f.x, 0.3, f.z, f.r, p2, 0.5, 0.8); sphere(f.x, 0, f.z, f.r, p2, 0.7, { dome: true, alpha: 0.35, from: 0.2 }); burst(f.x, 0.6, f.z, p2, { count: 24, speed: 3, up: 2, shape: 4 }); flash(f.x, 1.5, f.z, p2, 30); };
+  R.hookThrow = (f) => { const p2 = P('chain'); const L = f.length || 12, ex = f.x + Math.sin(f.angle) * L, ez = f.z + Math.cos(f.angle) * L; arc(f.x, 1.2, f.z, ex, 0.9, ez, p2, 0.45, 0.16, 0.04, 16); later(0.05, () => arc(f.x, 1.2, f.z, ex, 0.9, ez, P('danger'), 0.2, 0.08, 0.02, 8)); burst(ex, 0.9, ez, p2, { count: 12, speed: 5, up: 2, shape: 1, stretch: 1.5, size: 0.25 }); flash(ex, 1, ez, P('danger'), 14, 0.15); };
+  R.bombBlast = (f) => { const p2 = P('fire'); sphere(f.x, 0.8, f.z, f.r * 0.85, p2, 0.45); shock(f.x, 0.3, f.z, f.r * 1.1, p2, 0.55, 1.6); burst(f.x, 0.8, f.z, p2, { count: 60, speed: 12, up: 7, size: 0.5 }); burst(f.x, 0.5, f.z, P('earth'), { count: 16, speed: 9, up: 9, shape: 7, gravity: 22 }); smokePuff(f.x, 1.2, f.z, col('#2a1a14'), { count: 12, size: 2.4, up: 3 }); decalOnce(f, p2, { type: 6, life: 2.5, r: f.r, alpha: 0.75, dark: true }); flash(f.x, 2, f.z, p2, 90, 0.4, 18); };
+  R.webPatch = R.acidPool = R.sporeCloud = R.chronoField = 'zone';
   R.assassinate = R.snipe = R.pierceBolt = R.laser = (f) => { const p2 = P(f.kind === 'assassinate' ? 'blood' : f.palette || 'blade'); const L = f.length || (f.r || 8); const ex = f.x + Math.sin(f.angle) * L, ez = f.z + Math.cos(f.angle) * L; streak(f.x, f.z, ex, ez, p2, 0.35, f.width || 1.2, 1.1); burst(ex, 1, ez, p2, { count: 14, speed: 6, shape: 1, stretch: 2 }); flash(f.x, 1, f.z, p2, 30, 0.2); };
   R.vortex = R.blackHole = R.gravityWell = R.rift = R.abyssGate = 'zone';
   R.holySpin = (f) => { const p2 = P('holy'); slash(f.x, 1, f.z, Math.random() * TAU, f.r * 0.7, 360, p2, 0.25, rnd(-20, 20)); burst(f.x, 1, f.z, p2, { count: 16, speed: 10, up: 2, shape: 4, ring: f.r * 0.4 }); };
@@ -195,6 +204,10 @@ export function createVfx(scene, { quality = 'high' } = {}) {
     banner: { decal: 5, alpha: 0.6, parts: 'rise', palette: 'holy', spin: 0.3, core: 'banner' },
     bloodMist: { decal: 0, alpha: 0.2, parts: 'mist', palette: 'blood' },
     trap: { decal: 5, alpha: 0.6, palette: 'fire' },
+    webPatch: { decal: 8, alpha: 0.75, palette: 'web' },
+    acidPool: { decal: 0, alpha: 0.55, parts: 'bubbles', palette: 'acid', danger: true },
+    sporeCloud: { decal: 0, alpha: 0.28, parts: 'smoke', smokeColor: '#b050b8', palette: 'spore' },
+    chronoField: { decal: 9, alpha: 0.55, core: 'dome', spin: 0.3, palette: 'chrono' },
   };
   function zoneHandle(f) {
     const z = ZONES[f.kind] || ZONES.zone;
@@ -211,7 +224,7 @@ export function createVfx(scene, { quality = 'high' } = {}) {
         let x = f.x, zz = f.z;
         if (f.follow === 'player') { x = game.player.x; zz = game.player.z; }
         const r = f.r || 3;
-        (z.dark || z.danger ? decalsDark : decalsAdd).push(x, 0.04, zz, (z.spin || 0) * f.t * 2, r * 2, r * 2, z.danger ? col('#a0ff60') : pp.main, z.dark ? 0.75 : 0.9, z.decal, 0.82, 0, 0.12, 0, f.t, z.alpha * fade, z.spin || 0);
+        (z.dark || z.danger ? decalsDark : decalsAdd).push(x, 0.04, zz, (z.spin || 0) * f.t * 2, r * 2, r * 2, z.danger ? (z.palette === 'acid' ? col('#c8ff2a') : col('#a0ff60')) : pp.main, z.dark ? 0.75 : 0.9, z.decal, 0.82, 0, 0.12, 0, f.t, z.alpha * fade, z.spin || 0);
         if (z.core === 'sphere') decalsDark.push(x, 0.05, zz, 0, r * 1.1, r * 1.1, col('#000000'), 0.9 * fade, 0, 0, 0, 0.5, 0, f.t, 1, 0);
         if (core) {
           if (z.core === 'sphere') { core.position.set(x, 1.2, zz); core.scale.setScalar(r * 0.22 * fade + 0.01); core.material.uniforms.uAlpha.value = fade; }
@@ -299,6 +312,54 @@ export function createVfx(scene, { quality = 'high' } = {}) {
           default: break;
         }
         if (prog > 0.8 && !f.small && Math.random() < 0.3) parts.emit({ x: x + rnd(-1, 1), y: 0.1, z: z + rnd(-1, 1), vy: 2, life: 0.3, size: 0.25, color: DANGER_EDGE, color2: DANGER, shape: 0 });
+      },
+      dispose() {},
+    };
+  }
+
+  // soul tether beam (wraith -> hero) and its aiming flicker
+  function tetherHandle(f) {
+    const pp = P('tether');
+    let acc = 0;
+    return {
+      update(f, dt, game) {
+        const e = game.enemyById?.get(f.follow), p = game.player;
+        if (!e || e.dying || p.dead) return;
+        const ex = e.x, ey = 1.6, ez = e.z, px = p.x, py = p.y + 1.1, pz = p.z;
+        if (f.kind === 'tetherAim') {
+          const k = Math.min(1, f.t / Math.max(0.05, f.windup || 0.6));
+          bolts.bolt(ex, ey, ez, ex + (px - ex) * k, py, ez + (pz - ez) * k, pp.main, 0.35 + 0.4 * k, 0.07, 0.5, 8);
+          return;
+        }
+        if (p.debuffs?.tether?.src !== f.follow) return;
+        const fade = Math.min(1, f.t * 5);
+        bolts.bolt(ex, ey, ez, px, py, pz, pp.main, 0.75 * fade, 0.3, 0.6, 10);
+        bolts.bolt(ex, ey, ez, px, py, pz, pp.core, 0.6 * fade, 0.1, 0.9, 10);
+        decalsAdd.push(px, 0.05, pz, game.time * 2, 2.2, 2.2, pp.main, 0.7, 5, 0, 0, 0.1, 0, game.time, fade, 1);
+        acc += dt;
+        while (acc > 0.035) { acc -= 0.035; const t = Math.random(); parts.emit({ x: px + (ex - px) * t, y: py + (ey - py) * t, z: pz + (ez - pz) * t, vx: (ex - px) * 1.4, vy: rnd(-0.3, 0.3), vz: (ez - pz) * 1.4, life: 0.35, size: 0.32, color: pp.core, color2: pp.main, shape: 5, drag: 0.5 }); }
+      },
+      dispose() {},
+    };
+  }
+
+  // basilisk gaze: the telegraph is the exact cone that fills the hero's petrify meter
+  const GAZE = col('#ffb02a'), GAZE_HOT = col('#ff5a1a');
+  function gazeHandle(f) {
+    return {
+      update(f, dt, game) {
+        const e = game.enemyById?.get(f.follow);
+        if (!e || e.dying) return;
+        const prog = Math.min(1, f.t / Math.max(0.05, f.windup));
+        const live = f.t >= f.windup;
+        const hot = live && game.player.gazedBy == null && (game.player.gaze || 0) > 0.05;
+        const pulse = 0.8 + Math.sin(f.t * 14) * 0.2;
+        decalsDark.push(e.x, 0.05, e.z, e.face, f.r * 2, f.r * 2, hot ? GAZE_HOT : GAZE, (live ? 0.6 : 0.4) * pulse, 2, 0, (f.arc * Math.PI / 180) / 2, 0.05, live ? 1 : Math.max(0.01, prog));
+        if (live && Math.random() < 0.7) {
+          const a = e.face + (Math.random() - 0.5) * f.arc * Math.PI / 180, d = Math.random() * f.r;
+          parts.emit({ x: e.x + Math.sin(a) * d, y: 0.2, z: e.z + Math.cos(a) * d, vy: rnd(0.5, 1.5), life: 0.5, size: 0.3, color: col('#ffe0a0'), color2: col('#806040'), shape: 7 });
+        }
+        if (live) for (const s of [-1, 1]) { const hx = e.x + Math.sin(e.face) * 1.0 + Math.cos(e.face) * s * 0.17, hz = e.z + Math.cos(e.face) * 1.0 - Math.sin(e.face) * s * 0.17; bolts.bolt(hx, 0.95, hz, hx + Math.sin(e.face) * 3, 0.5, hz + Math.cos(e.face) * 3, GAZE, 0.45, 0.06, 0.1, 4); }
       },
       dispose() {},
     };
@@ -445,6 +506,8 @@ export function createVfx(scene, { quality = 'high' } = {}) {
   function handleFor(f) {
     if (f.kind === 'danger') return dangerHandle(f);
     if (f.kind === 'bossBeams') return bossBeamsHandle(f);
+    if (f.kind === 'tether' || f.kind === 'tetherAim') return tetherHandle(f);
+    if (f.kind === 'gazeCone') return gazeHandle(f);
     if (f.kind === 'orbit') return orbitHandle(f);
     if (f.kind === 'chainBolt' || f.kind === 'drain' && !f.follow) return chainHandle(f);
     if (['flameWedge', 'holyWave', 'wave'].includes(f.kind)) return waveHandle(f);
@@ -458,7 +521,6 @@ export function createVfx(scene, { quality = 'high' } = {}) {
   return {
     sync(game, dt) {
       const t = game.time;
-      decalsAdd.begin(); decalsDark.begin(); bolts.begin();
       decalsAdd.uniforms.uTime.value = t; decalsDark.uniforms.uTime.value = t;
       if (!game.enemyById || game.enemyById.frame !== game.time) { game.enemyById = new Map(game.enemies.map((e) => [e.uid, e])); game.enemyById.frame = game.time; }
       const seen = new Set();
@@ -492,8 +554,10 @@ export function createVfx(scene, { quality = 'high' } = {}) {
       for (let i = decalOnces.length - 1; i >= 0; i--) { const d = decalOnces[i]; d.life -= dt; d.t += dt; if (d.life <= 0) { decalOnces.splice(i, 1); continue; } const k = d.life / d.max; (d.dark ? decalsDark : decalsAdd).push(d.x, 0.045, d.z, d.spin * d.t * 2, d.r * 2, d.r * 2, d.dark ? d.pp.dark.clone().multiplyScalar(0.3) : d.pp.main, d.alpha * Math.min(1, k * 2), d.type, 0.8, 0, 0.12, d.fill ? Math.max(0.01, 1 - k) : 0, d.t, 1, d.spin); }
       for (let i = trails.length - 1; i >= 0; i--) { const tr = trails[i]; tr.t += dt; if (tr.t >= tr.dur) { trails.splice(i, 1); continue; } }
       parts.update(dt); smoke.update(dt); lights.update(dt); pool.tick(t);
-      decalsAdd.end(); decalsDark.end(); bolts.end();
     },
+    /** Decals and lightning are immediate-mode: everything pushed between begin() and end() draws this frame. */
+    begin() { decalsAdd.begin(); decalsDark.begin(); bolts.begin(); },
+    end() { decalsAdd.end(); decalsDark.end(); bolts.end(); },
     burst, smokePuff, shock, flash, slash, sphere, pillar, streak, arc: (...a) => arc(...a), P, parts, decalsAdd, decalsDark, bolts, pool, lights,
     clear() { for (const [, h] of handles) h.dispose(); handles.clear(); parts.clear(); smoke.clear(); for (const tr of transient) pool.release(tr.m); transient.length = 0; timers.length = 0; arcs.length = 0; streaks.length = 0; decalOnces.length = 0; },
     stats: () => ({ particles: parts.count, smoke: smoke.count, handles: handles.size, meshes: pool.live.size }),

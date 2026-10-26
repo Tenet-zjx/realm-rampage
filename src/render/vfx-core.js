@@ -14,6 +14,15 @@ export const PALETTES = {
   blood: { core: '#ffd0d0', main: '#ff3b4e', dark: '#6a0010', shape: 'drop' },
   danger: { core: '#ffd8c8', main: '#ff3a20', dark: '#600000', shape: 'ember' },
   poison: { core: '#e8ffd0', main: '#8cff4a', dark: '#2a6a10', shape: 'drop' },
+  web: { core: '#ffffff', main: '#e8e2d0', dark: '#7a7060', shape: 'dot' },
+  hex: { core: '#f0ffd0', main: '#8aff5a', dark: '#1a5a10', shape: 'star' },
+  tether: { core: '#e0fff8', main: '#4affd8', dark: '#0a5a5a', shape: 'wisp' },
+  chrono: { core: '#fffbe0', main: '#ffd76a', dark: '#3a7aff', shape: 'star' },
+  acid: { core: '#f8ffd0', main: '#d4ff3a', dark: '#4a6a00', shape: 'drop' },
+  spore: { core: '#ffe0ff', main: '#ff7ad8', dark: '#6a2a8a', shape: 'ring' },
+  blind: { core: '#d8d8f0', main: '#7a7aaa', dark: '#141420', shape: 'smoke' },
+  chain: { core: '#ffffff', main: '#b8bcc8', dark: '#3a3e48', shape: 'spark' },
+  stone: { core: '#f4ecd8', main: '#b8ac94', dark: '#5a5040', shape: 'chip' },
 };
 const C = {};
 export const col = (hex) => (C[hex] ??= new THREE.Color(hex));
@@ -57,9 +66,22 @@ void main() {
   } else if ( type < 6.5 ) { // cracks / scorch
     float n = noise( vUv * 4.0 + vShape.z ) ; float rays = pow( abs( sin( a * 7.0 + n * 3.0 ) ), 18.0 );
     alpha = smoothstep( 1.0, 0.1, r ) * ( 0.45 * smoothstep( 0.9, 0.0, r ) + rays * smoothstep( 1.0, 0.3, r ) ); edge = rays;
-  } else { // burst rays
+  } else if ( type < 7.5 ) { // burst rays
     float rays = pow( abs( sin( a * 6.0 + t ) ), 6.0 );
     alpha = smoothstep( 1.0, 0.0, r ) * ( 0.25 + rays ); edge = rays * smoothstep( 1.0, 0.2, r );
+  } else if ( type < 8.5 ) { // spider web: 8 spokes + sagging rings
+    float spoke = smoothstep( 0.045, 0.0, abs( sin( a * 4.0 ) ) * r );
+    float rs = r * ( 1.0 + 0.09 * abs( sin( a * 4.0 ) ) );
+    float ring = smoothstep( 0.03, 0.0, abs( fract( rs * 4.0 ) - 0.5 ) / 4.0 ) * step( 0.1, r );
+    alpha = max( spoke, ring ) * smoothstep( 1.0, 0.88, r ) + smoothstep( 0.12, 0.0, r ); edge = alpha;
+  } else { // clock face: rings, 12 ticks and two sweeping hands
+    float ring1 = smoothstep( 0.035, 0.0, abs( r - 0.93 ) ), ring2 = smoothstep( 0.02, 0.0, abs( r - 0.62 ) );
+    float ticks = step( 0.9, fract( a * 1.9099 + 0.05 ) ) * step( 0.74, r ) * step( r, 0.88 );
+    float h1 = t * 0.35, h2 = t * 2.4;
+    vec2 d1 = vec2( sin( h1 ), cos( h1 ) ), d2 = vec2( sin( h2 ), cos( h2 ) );
+    float hand1 = smoothstep( 0.035, 0.0, abs( vUv.x * d1.y - vUv.y * d1.x ) ) * step( 0.0, dot( vUv, d1 ) ) * step( r, 0.45 );
+    float hand2 = smoothstep( 0.025, 0.0, abs( vUv.x * d2.y - vUv.y * d2.x ) ) * step( 0.0, dot( vUv, d2 ) ) * step( r, 0.78 );
+    alpha = max( max( ring1, ring2 ), max( ticks, max( hand1, hand2 ) ) ) + smoothstep( 1.0, 0.0, r ) * 0.15; edge = alpha;
   }
   // telegraph fill: radial progress vAnim.x (> 0 enables)
   if ( vAnim.x > 0.0 ) {
@@ -75,7 +97,8 @@ void main() {
 }`;
 
 export function createDecals(scene, capacity = 700, additive = true) {
-  const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  // uv +y must point along the game's facing (sin a, cos a) so arc/line telegraphs and fills face forward
+  const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).rotateY(Math.PI);
   const aColor = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4).setUsage(THREE.DynamicDrawUsage);
   const aShape = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4).setUsage(THREE.DynamicDrawUsage);
   const aAnim = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4).setUsage(THREE.DynamicDrawUsage);

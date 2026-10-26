@@ -112,6 +112,51 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .buff { width: 28px; height: 28px; border-radius: 6px; background-size: cover; background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.25); position: relative; }
 .buff i { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); transform-origin: left; }
 
+/* debuffs (v1.1): bar under the hero, gaze meter, crowd-control banner, world callouts, bomb fuse */
+.debuffs { position: absolute; left: 50%; top: calc(50% + 74px); transform: translateX(-50%); display: flex; gap: 6px; pointer-events: auto; }
+.debuff { width: 34px; height: 34px; border-radius: 8px; background-size: cover; border: 2px solid var(--c); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent), 0 2px 6px #000; position: relative; animation: debuffIn 0.3s ease-out; }
+.debuff.cc { border-radius: 50%; animation: debuffIn 0.3s ease-out, ccPulse 0.8s ease-in-out infinite; }
+.debuff .sweep { position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(transparent calc(var(--p, 100%)), rgba(0, 0, 0, 0.62) 0); }
+.debuff b { position: absolute; right: -5px; bottom: -5px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: var(--c); color: #111; font: 800 11px/16px var(--body-font); text-align: center; }
+.debuff span { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; font: 700 10px var(--body-font); color: var(--c); white-space: nowrap; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+@keyframes debuffIn { 0% { transform: scale(1.8); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes ccPulse { 50% { box-shadow: 0 0 18px var(--c), 0 2px 6px #000; } }
+.gaze-meter { position: absolute; left: 50%; top: calc(50% + 124px); transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font: 700 12px var(--body-font); color: #e8dcc0; text-shadow: 0 1px 2px #000; pointer-events: none; }
+.gaze-meter .bar { width: 150px; height: 10px; border-radius: 5px; background: rgba(0, 0, 0, 0.6); border: 1px solid #c8bca4; overflow: hidden; }
+.gaze-meter .bar i { display: block; height: 100%; background: linear-gradient(90deg, #8a8070, #e8dcc0, #ffb02a); transform-origin: left; }
+.cc-banner { position: absolute; left: 50%; top: calc(50% + 146px); transform: translateX(-50%); padding: 4px 14px; border-radius: 999px; background: rgba(10, 6, 20, 0.82); border: 1px solid var(--c); color: var(--c); font: 700 13px var(--body-font); letter-spacing: 1px; white-space: nowrap; pointer-events: none; box-shadow: 0 0 14px color-mix(in srgb, var(--c) 45%, transparent); }
+.callouts { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.callout { position: absolute; left: 0; top: 0; font: 800 17px var(--body-font); letter-spacing: 1px; white-space: nowrap; text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 0 #000; will-change: transform, opacity; }
+.callout.big { font-size: 24px; letter-spacing: 3px; }
+.bomb-count { position: absolute; left: 0; top: 0; font: 900 38px "Arial Black", var(--body-font); color: #ff4a2a; text-shadow: 0 0 14px rgba(255, 60, 20, 0.95), 0 3px 0 #000; pointer-events: none; }
+.cc-flash { position: absolute; left: 50%; top: 36%; transform: translateX(-50%); font: 800 44px var(--title-font); letter-spacing: 8px; color: #e8dcc0; text-shadow: 0 0 18px rgba(200, 180, 140, 0.9), 0 3px 0 #000; animation: mk 1.3s ease-out forwards; pointer-events: none; }
+.skillbar.locked .slot, .items.locked .islot { filter: grayscale(0.85) brightness(0.6); }
+.skillbar.locked .slot::after, .items.locked .islot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: repeating-linear-gradient(135deg, rgba(194, 122, 255, 0.35) 0 4px, transparent 4px 9px); border: 2px solid rgba(194, 122, 255, 0.8); }
+/* full-screen debuff overlays */
+.screenfx, .screenfx i { position: absolute; inset: 0; pointer-events: none; }
+.screenfx { --blind: 0; --poison: 0; --bleed: 0; --frost: 0; --fear: 0; --confuse: 0; --time: 0; --hex: 0; --tether: 0; --bomb: 0; }
+.screenfx i { opacity: 0; transition: opacity 0.35s; }
+.fx-blind { opacity: var(--blind) !important; background: radial-gradient(circle at 50% 52%, transparent 0 13%, rgba(4, 3, 10, 0.86) 30%, rgba(2, 1, 6, 0.97) 60%); }
+.fx-poison { opacity: var(--poison) !important; box-shadow: inset 0 0 140px rgba(110, 255, 60, 0.55); animation: fxPulse 1.4s ease-in-out infinite; }
+.fx-bleed { opacity: var(--bleed) !important; box-shadow: inset 0 0 120px rgba(255, 20, 40, 0.6); background: radial-gradient(ellipse at 50% 0%, rgba(160, 0, 20, 0.35), transparent 30%); animation: fxPulse 0.9s ease-in-out infinite; }
+.fx-frost { opacity: var(--frost) !important; box-shadow: inset 0 0 160px rgba(190, 240, 255, 0.85); background: radial-gradient(ellipse at center, transparent 55%, rgba(200, 240, 255, 0.35) 100%); }
+.fx-fear { opacity: var(--fear) !important; background: radial-gradient(circle at 50% 50%, transparent 25%, rgba(60, 10, 110, 0.55) 80%); animation: fxPulse 0.5s ease-in-out infinite; }
+.screenfx { overflow: hidden; }
+.screenfx .fx-confuse { inset: -75%; }
+.fx-confuse { opacity: calc(var(--confuse) * 0.75) !important; background: conic-gradient(from 0deg, rgba(255, 90, 210, 0.22), rgba(90, 200, 255, 0.22), rgba(255, 230, 90, 0.22), rgba(255, 90, 210, 0.22)); mix-blend-mode: screen; animation: fxSpin 2.4s linear infinite; }
+.fx-time { opacity: var(--time) !important; background: radial-gradient(circle at center, transparent 40%, rgba(255, 210, 110, 0.32) 100%); mix-blend-mode: screen; backdrop-filter: sepia(0.35); }
+.fx-hex { opacity: var(--hex) !important; box-shadow: inset 0 0 150px rgba(120, 255, 70, 0.55); }
+.fx-tether { opacity: var(--tether) !important; box-shadow: inset 0 0 130px rgba(70, 255, 216, 0.5); animation: fxPulse 0.7s ease-in-out infinite; }
+.fx-bomb { opacity: var(--bomb) !important; box-shadow: inset 0 0 calc(80px + var(--bomb) * 120px) rgba(255, 40, 20, 0.6); animation: fxPulse 0.35s ease-in-out infinite; }
+@keyframes fxPulse { 50% { filter: brightness(1.35); } }
+@keyframes fxSpin { to { transform: rotate(360deg); } }
+body.petrified #scene { filter: grayscale(0.85) sepia(0.25) contrast(1.05); transition: filter 0.2s; }
+@media (max-height: 520px) {
+  .debuffs { top: calc(50% + 52px); gap: 4px; } .debuff { width: 26px; height: 26px; } .debuff span { display: none; }
+  .gaze-meter { top: calc(50% + 86px); } .cc-banner { top: calc(50% + 104px); font-size: 11px; padding: 2px 10px; }
+  .callout { font-size: 13px; } .callout.big { font-size: 17px; } .bomb-count { font-size: 26px; }
+}
+
 /* banners & announcements */
 .banner { position: absolute; left: 50%; top: 24%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; animation: bannerIn 2.4s ease-out forwards; white-space: nowrap; }
 .banner .t { font: 700 52px var(--title-font); letter-spacing: 8px; color: #fff4d0; text-shadow: 0 0 20px rgba(255, 180, 60, 0.9), 0 4px 0 #3a1a00, 0 0 60px rgba(255, 120, 40, 0.6); }
@@ -319,3 +364,6 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
   .camp { padding: 10px; } .results { padding: 14px; gap: 8px; } .results .big { font-size: 34px; }
   .logo .cn { font-size: 54px; } .menu .btn { padding: 9px; font-size: 15px; } .menu-footer { display: none; }
 }
+.dchips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.dchips span { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px 1px 2px; border-radius: 999px; border: 1px solid var(--c); color: var(--c); font-size: 11px; background: rgba(0, 0, 0, 0.35); }
+.dchips b { width: 16px; height: 16px; border-radius: 50%; background-size: cover; }

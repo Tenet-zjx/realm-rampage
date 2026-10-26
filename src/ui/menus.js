@@ -1,5 +1,5 @@
 import { h, esc, skillIconHtml, itemIconHtml, rarityTag, heroIconHtml, enemyIconHtml, iconImg } from './dom.js';
-import { bossIconUrl } from './icons.js';
+import { bossIconUrl, debuffIconUrl } from './icons.js';
 import { HEROES, HERO } from '../game/content/heroes.js';
 import { DIFFICULTIES } from '../game/content/difficulties.js';
 import { CHAPTERS, BIOMES } from '../game/content/stages.js';
@@ -7,6 +7,7 @@ import { FACTIONS } from '../game/content/factions.js';
 import { DRAFTABLE, SKILL } from '../game/content/skills.js';
 import { COMPONENTS, CRAFTED, ARTIFACTS, CONSUMABLES, NEUTRALS, META_ITEMS, ITEM } from '../game/content/items.js';
 import { ENEMIES, BOSSES } from '../game/content/enemies.js';
+import { DEBUFF } from '../game/content/debuffs.js';
 import { TALENTS, TALENT_LINES, ACHIEVEMENTS, MASTERY, ACCOUNT } from '../game/content/meta.js';
 import { RARITIES } from '../game/content/rarities.js';
 import { talentPointsFree, canBuyTalent, buyTalent, buyMeta, toggleLoadout, unlockHero, chapterUnlocked } from '../game/progression.js';
@@ -200,7 +201,7 @@ export function createMenus(root, ctx) {
         for (const d of list) { const c2 = h('div', { class: `codex-item ${seen.skills.has(d.id) ? '' : 'unseen'}` }); c2.innerHTML = `${skillIconHtml(d.id, { size: 'sm' })}<div><div class="nm rar rar-${d.rarity}">${esc(d.name)}</div><div class="muted">${esc(describe(d, 1, null))}</div></div>`; grid.append(c2); }
       }
       if (sub === 'items') for (const it of [...COMPONENTS, ...CRAFTED, ...ARTIFACTS, ...CONSUMABLES, ...NEUTRALS]) { const c2 = h('div', { class: `codex-item ${seen.items.has(it.id) || it.type === 'component' || it.type === 'consumable' ? '' : 'unseen'}` }); c2.innerHTML = `${itemIconHtml(it.id)}<div><div class="nm rar rar-${it.rarity}">${esc(it.name)}</div><div class="muted">${esc(it.desc || Object.entries(it.stats || {}).map(([k, v]) => statLabel(k, v)).join(' '))}${it.parts ? `<br>配方：${it.parts.map((x) => ITEM[x].name).join(' + ')}${it.recipe ? ` + 卷轴 ${it.recipe}` : ''}` : ''}${it.tier ? `<br>${it.tier} 阶秘宝` : ''}</div></div>`; grid.append(c2); }
-      if (sub === 'enemies') for (const e of [...ENEMIES, ...BOSSES]) { const c2 = h('div', { class: `codex-item ${seen.enemies.has(e.model) ? '' : 'unseen'}` }); c2.innerHTML = `${e.patterns ? `<div class="icon sm" style='--r:#eb4b4b;${iconImg(bossIconUrl())}'></div>` : enemyIconHtml(e.id)}<div><div class="nm">${esc(e.name)}</div><div class="muted">${esc(e.desc || e.title || '')}${e.patterns ? `<br>招式：${e.patterns.map((x) => x.name).join('、')}` : ''}</div></div>`; grid.append(c2); }
+      if (sub === 'enemies') for (const e of [...ENEMIES, ...BOSSES]) { const c2 = h('div', { class: `codex-item ${seen.enemies.has(e.model) ? '' : 'unseen'}` }); c2.innerHTML = `${e.patterns ? `<div class="icon sm" style='--r:#eb4b4b;${iconImg(bossIconUrl())}'></div>` : enemyIconHtml(e.id)}<div><div class="nm">${esc(e.name)}</div><div class="muted">${esc(e.desc || e.title || '')}${e.patterns ? `<br>招式：${e.patterns.map((x) => x.name).join('、')}` : ''}</div>${e.debuffs ? `<div class="dchips">${e.debuffs.map((d) => `<span style="--c:${DEBUFF[d].color}" title="${esc(DEBUFF[d].desc)}"><b style='${iconImg(debuffIconUrl(d))}'></b>${esc(DEBUFF[d].name)}</span>`).join('')}</div>` : ''}</div>`; grid.append(c2); }
       if (sub === 'rarity') for (const r of RARITIES) { const c2 = h('div', { class: 'codex-item' }); c2.innerHTML = `<div class="icon sm r-${r.id}" style="--r:${r.color};background:radial-gradient(circle,${r.color},#120f1b 75%)"></div><div><div class="nm" style="color:${r.color}">${r.name}</div><div class="muted">出现权重 ${r.weight} · 强度系数 ×${r.power}</div></div>`; grid.append(c2); }
       body.append(grid);
     }

@@ -9,7 +9,9 @@ import { createUnitRenderer } from './units.js';
 import { createVfx } from './vfx.js';
 import { createEntities } from './entities.js';
 import { createNumbers } from './numbers.js';
+import { createHeroFx } from './hero-fx.js';
 import { col, pal } from './vfx-core.js';
+import { DEBUFF } from '../game/content/debuffs.js';
 
 const QUALITY = {
   high: { pixelRatio: 2, bloom: true, shadows: true, particles: 'high', shadowSize: 2048 },
@@ -34,6 +36,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
   const vfx = createVfx(scene, { quality: Q.particles });
   const entities = createEntities(scene, vfx);
   const numbers = createNumbers(scene);
+  const heroFx = createHeroFx(scene, vfx);
   let composer = null, bloom = null;
   if (Q.bloom) {
     composer = new EffectComposer(renderer);
@@ -99,14 +102,20 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
         case 'gold': numbers.add(ev.x, 1.2, ev.z, ev.amount, { hex: '#ffd76a', prefix: '+', small: true }); break;
         case 'dodge': vfx.smokePuff(p.x, 0.5, p.z, col('#8a8aa0'), { count: 4, size: 0.9, speed: 2, up: 0.3, life: 0.5 }); vfx.burst(p.x, 1, p.z, pal2('storm'), { count: 8, speed: 3, up: 1, shape: 1, stretch: 1.5, size: 0.25 }); break;
         case 'cast': { const pp = pal2(ev.faction || game.hero.palette); vfx.burst(p.x, 1.4, p.z, pp, { count: 14, speed: 4, up: 3, shape: 4, size: 0.35 }); vfx.decalsAdd && castCircles.push({ x: p.x, z: p.z, t: 0, pp }); break; }
-        case 'guardBreak': vfx.burst(ev.x, 1.2, ev.z, pal2('frost'), { count: 18, speed: 8, up: 4, shape: 2, size: 0.4 }); numbers.add(ev.x, 2.4, ev.z, 0, { force: true, hex: '#8fe3ff' }); break;
+        case 'guardBreak': vfx.burst(ev.x, 1.2, ev.z, pal2('frost'), { count: 18, speed: 8, up: 4, shape: 2, size: 0.4 }); break;
         case 'blocked': vfx.burst(ev.x, 1.2, ev.z, pal2('blade'), { count: 4, speed: 5, up: 2, shape: 1, stretch: 2, size: 0.25 }); break;
         case 'execute': vfx.slash(ev.x, 1, ev.z, Math.random() * 6.28, 2, 160, pal2('blood'), 0.25, 30); break;
         case 'land': if (Math.random() < 0.3) vfx.smokePuff(ev.x, 0.2, ev.z, col('#7a6a58'), { count: 2, size: 0.8, speed: 2, up: 0.2, life: 0.5 }); break;
         case 'bossSpawn': cam.trauma = 1; break;
         case 'status': if (ev.kind === 'freeze') vfx.burst(ev.x, 1, ev.z, pal2('frost'), { count: 4, speed: 2, up: 2, shape: 2, size: 0.3 }); break;
-        case 'evade': numbers.add(p.x, 2.4, p.z, 0, { force: true, hex: '#c8f4ff', small: true }); break;
         case 'revive': vfx.pillar(p.x, p.z, 2, 14, pal2('holy'), 1.2); vfx.shock(p.x, 0.3, p.z, 9, pal2('holy'), 0.8, 2); break;
+        case 'petrified': heroFx.burstPetrify(p.x, p.z); cam.trauma = Math.min(1, cam.trauma + 0.4 * api.shake); break;
+        case 'debuff': if (ev.fresh) heroFx.burstDebuff(p.x, p.z, DEBUFF[ev.id]?.color || '#ffffff'); break;
+        case 'debuffBurst': heroFx.burstDebuff(p.x, p.z, ev.id === 'webbed' ? '#ffffff' : '#8fe3ff'); vfx.shock(p.x, 0.3, p.z, 2.4, pal2(ev.id === 'webbed' ? 'blade' : 'frost'), 0.4); break;
+        case 'cleanse': vfx.pillar(p.x, p.z, 1.2, 6, pal2('holy'), 0.6); vfx.burst(p.x, 1, p.z, pal2('holy'), { count: 24, speed: 4, up: 4, shape: 4 }); break;
+        case 'tetherBreak': vfx.burst(p.x, 1.2, p.z, pal2('tether'), { count: 20, speed: 6, up: 2, shape: 5, size: 0.4 }); break;
+        case 'dispel': vfx.shock(p.x, 1, p.z, 2.5, pal2('arcane'), 0.4, 0.6); break;
+        case 'bombExplode': if (ev.dodged) vfx.burst(p.x, 1, p.z, pal2('storm'), { count: 20, speed: 6, up: 3, shape: 1, stretch: 2 }); break;
         default: break;
       }
     }
@@ -180,14 +189,17 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
     frame(game, dt, rawMs) {
       const key = `${game.stageIndex}-${game.biomeId}-${game.obstacles.length}`;
       if (key !== lastBiomeKey) { lastBiomeKey = key; arena.setBiome(game); }
+      vfx.begin();
       handleEvents(game);
       crowd.sync(game, dt);
       units.sync(game, dt);
       vfx.sync(game, dt);
+      heroFx.sync(game, dt);
       // cast circles under the hero
       for (let i = castCircles.length - 1; i >= 0; i--) { const c = castCircles[i]; c.t += dt; if (c.t > 0.5) { castCircles.splice(i, 1); continue; } vfx.decalsAdd.push(c.x, 0.06, c.z, c.t * 3, 3.2, 3.2, c.pp.main, 1 - c.t * 2, 5, 0, 0, 0.1, 0, c.t, 1, 0); }
       syncMarkers(game);
       entities.sync(game, dt, units);
+      vfx.end();
       numbers.update(dt);
       arena.update(game, dt, camera);
       updateCamera(game, dt);

@@ -65,6 +65,7 @@ export function createUnitRenderer(scene, assets) {
   const setFlash = (v, amount, color) => { for (const m of v.mats) { const u = m.userData.rr; if (!u) continue; u.uFlash.value.set(color?.r ?? 1, color?.g ?? 1, color?.b ?? 1, amount); } };
   const setTint = (v, rgb, amount) => { for (const m of v.mats) { const u = m.userData.rr; if (!u) continue; u.uTint.value.set(rgb[0], rgb[1], rgb[2], amount); } };
   const setDissolve = (v, d) => { for (const m of v.mats) { const u = m.userData.rr; if (u) u.uDissolve.value = d; } };
+  const setStone = (v, k) => { for (const m of v.mats) { const u = m.userData.rr; if (u) u.uStone.value = k; } };
   const handWorld = (v, out, tip = 0) => {
     if (!v.hand) return out.copy(v.root.position).setY(1.2);
     v.hand.updateWorldMatrix(true, false);
@@ -76,10 +77,17 @@ export function createUnitRenderer(scene, assets) {
     const p = game.player, hero = game.hero, a = view.anim;
     view.root.position.set(p.x, p.y, p.z);
     view.root.rotation.y = p.face;
-    const sc = view.scale * (game.stats?.scale || 1);
-    view.root.scale.set(sc, sc, sc);
+    const D = p.debuffs || {}, has = (id) => (D[id]?.t || 0) > 0;
+    const hexed = has('hex'), stone = has('petrify'), frozen = has('freeze');
+    view.hexK = (view.hexK ?? 0) + ((hexed ? 1 : 0) - (view.hexK ?? 0)) * Math.min(1, dt * 12);
+    view.stoneK = (view.stoneK ?? 0) + ((stone ? 1 : 0) - (view.stoneK ?? 0)) * Math.min(1, dt * 8);
+    const sc = view.scale * (game.stats?.scale || 1) * (1 - view.hexK * 0.45);
+    view.root.scale.set(sc, sc * (hexed ? 0.9 + Math.abs(Math.sin(game.time * 9)) * 0.15 : 1), sc);
+    if (hexed && p.state === 'move') view.root.position.y = p.y + Math.abs(Math.sin(game.time * 9)) * 0.35;
     const clips = hero.clips;
     if (p.dead) { if (a.name !== clips.death) a.play(clips.death, { loop: false, fade: 0.15 }); }
+    else if (has('hooked')) a.play('Hit_B', { loop: false, timeScale: 1.2 });
+    else if (stone || frozen) { /* pose holds below */ }
     else if (p.state === 'musou') {
       const ms = p.musouState, m = hero.musou;
       const finishing = ms && ms.t >= ms.dur * 0.72;
@@ -93,11 +101,18 @@ export function createUnitRenderer(scene, assets) {
     else if (p.state === 'move') a.play(clips.run, { loop: true, timeScale: Math.max(0.8, game.stats.speed / 6.4) });
     else a.play(clips.idle, { loop: true });
     view.lastCast = p.castAnim;
-    a.update(dt);
+    const fb = D.frostbite?.t > 0 ? D.frostbite.stacks : 0;
+    a.update(stone || frozen ? 0 : dt * (has('timeslow') ? 0.6 : 1) * (1 - fb * 0.07));
+    setStone(view, view.stoneK);
     // feedback
     setFlash(view, Math.max(p.hurtFlash * 0.9, p.invuln > 0 && p.state === 'dodge' ? 0.15 : 0), p.hurtFlash > 0 ? { r: 1, g: 0.2, b: 0.15 } : { r: 0.6, g: 0.8, b: 1 });
     const buffTint = p.buffs.find((b) => b.vfx === 'bloodRage') ? [1, 0.4, 0.4] : p.buffs.find((b) => b.vfx === 'godStrength') ? [1, 0.85, 0.4] : p.trueMusou && p.state === 'musou' ? [1, 0.4, 0.2] : null;
-    setTint(view, buffTint || [1, 1, 1], buffTint ? 0.35 : 0);
+    const pulse = 0.5 + Math.sin(game.time * 8) * 0.5;
+    const dTint = frozen ? [[0.55, 0.85, 1.3], 0.6] : hexed ? [[0.45, 1.25, 0.35], 0.7] : has('fear') ? [[0.7, 0.4, 1.1], 0.3 + pulse * 0.2] : has('confuse') ? [[1.3, 0.5, 1.1], 0.2 + pulse * 0.25]
+      : has('root') ? [[0.5, 1.1, 0.4], 0.35] : has('timeslow') ? [[1.2, 1.0, 0.5], 0.25] : D.poison?.t > 0 ? [[0.55, 1.2, 0.35], 0.12 + Math.min(10, D.poison.stacks) * 0.025 * pulse]
+      : D.corrode?.t > 0 ? [[1.0, 1.2, 0.3], 0.1 + D.corrode.stacks * 0.04] : fb ? [[0.6, 0.9, 1.3], fb * 0.07] : D.webbed?.t > 0 ? [[1.2, 1.2, 1.1], D.webbed.stacks * 0.12] : null;
+    if (dTint && !buffTint) setTint(view, dTint[0], dTint[1]);
+    else setTint(view, buffTint || [1, 1, 1], buffTint ? 0.35 : 0);
     view.root.visible = !(p.stealthT > 0 && Math.floor(game.time * 20) % 3 === 0);
   }
 

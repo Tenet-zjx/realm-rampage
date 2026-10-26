@@ -11,6 +11,9 @@ const PROJ = {
   bolt: { glow: 'blade', size: 0.35, mesh: 'bolt' }, knife: { glow: 'blade', size: 0.35, mesh: 'blade' }, bone: { glow: 'shadow', size: 0.4, mesh: 'bolt' }, iceShard: { glow: 'frost', size: 0.4, mesh: 'shard' },
   crescent: { glow: 'blade', size: 1.2, mesh: 'crescent' }, sword: { glow: 'blade', size: 0.7, mesh: 'blade' }, stormSword: { glow: 'storm', size: 0.8, mesh: 'blade' },
   hammer: { glow: 'storm', size: 0.9, mesh: 'hammer' }, boulder: { glow: 'earth', size: 1.5, mesh: 'rock' }, rock: { glow: 'earth', size: 0.45, mesh: 'rock' }, bomb: { glow: 'fire', size: 0.6, mesh: 'rock' },
+  webShot: { glow: 'web', size: 0.75, mesh: 'orb', enemy: true, trail: 'web' }, frostSpit: { glow: 'frost', size: 0.5, mesh: 'shard', enemy: true, trail: 'frost' },
+  hexBolt: { glow: 'hex', size: 0.8, mesh: 'orb', enemy: true, trail: 'hex', spin: true }, bombShot: { glow: 'fire', size: 0.55, mesh: 'rock', enemy: true, trail: 'fire', fuse: true },
+  chronoBolt: { glow: 'chrono', size: 0.45, mesh: 'orb', enemy: true },
 };
 
 export function createEntities(scene, vfx) {
@@ -65,6 +68,7 @@ export function createEntities(scene, vfx) {
         else if (def.mesh === 'rock' || def.mesh === 'hammer') put(def.mesh, pr.x, pr.y + (def.mesh === 'rock' ? def.size * 0.3 : 0), pr.z, pr.angle, def.size, def.size, def.size, null, pr.traveled * 2, 0);
         else if (def.mesh === 'bat') put('bat', pr.x, pr.y, pr.z, pr.angle, 0.7, 0.7 + Math.sin(game.time * 30 + pr.uid) * 0.3, 0.7, col('#4a2050'));
         else put(def.mesh, pr.x, pr.y, pr.z, pr.angle, def.size, def.size, def.mesh === 'orb' ? def.size : len, col(p.core));
+        if (def.trail && Math.random() < 0.7) { const tp = pal(def.trail); vfx.parts.emit({ x: pr.x + (Math.random() - 0.5) * def.size, y: pr.y + (Math.random() - 0.5) * def.size, z: pr.z + (Math.random() - 0.5) * def.size, vx: 0, vy: def.fuse ? 1.5 : -0.4, vz: 0, life: 0.45, size: def.size * 0.6, size1: 0.05, color: col(def.fuse ? '#ffd060' : tp.core), color2: col(tp.dark), shape: def.spin ? 4 : 0, drag: 2 }); }
         // glow + trail
         vfx.parts.emit({ x: pr.x, y: pr.y, z: pr.z, vx: -Math.sin(pr.angle) * 2, vy: 0, vz: -Math.cos(pr.angle) * 2, life: def.mesh === 'orb' ? 0.25 : 0.18, size: def.size * (def.mesh === 'orb' ? 2.4 : 1.4), size1: def.size * 0.4, color: col(p.main), color2: col(p.dark), alpha: 0.9, shape: def.streak ? 1 : 0, stretch: def.streak ? 2 : 0, drag: 4 });
       }

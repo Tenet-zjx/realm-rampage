@@ -70,7 +70,7 @@ export const ENEMIES = [
   E('myconid', '迷幻菇人', 'myconid', 'melee', { rig: 'og', hp: 85, dmg: 9, speed: 2.8, def: 2, xp: 4, gold: 4, radius: 0.75, mass: 1.6, special: true, squadMax: 2, maxAlive: 4, debuffs: ['confuse'],
     desc: '鼓胀身体喷出迷幻孢子：命中后移动方向颠倒，孢子云会持续一段时间。',
     attack: { range: 1.8, windup: 0.5, recover: 0.6, cd: 1.9, shape: 'arc', r: 2.0, angle: 110 },
-    ability: { kind: 'aoe', name: '迷幻孢子', cd: 8, range: 3.5, at: 'self', r: 3.6, windup: 0.9, dmg: 0.4, status: { confuse: 3 }, impact: 'sporeBurst', palette: 'arcane', hazard: { kind: 'spore', r: 3, dur: 4, status: { confuse: 1.2 }, every: 0.5 } },
+    ability: { kind: 'aoe', name: '迷幻孢子', cd: 8, range: 3.5, at: 'self', r: 3.6, windup: 0.9, dmg: 0.4, status: { confuse: 3 }, impact: 'sporeBlast', palette: 'arcane', hazard: { kind: 'spore', r: 3, dur: 4, status: { confuse: 1.2 }, every: 0.5 } },
     clips: { cast: 'Cast' } }),
   E('dire_wolf', '血牙狼', 'dire_wolf', 'charger', { rig: 'og', hp: 60, dmg: 11, speed: 4.6, xp: 3, gold: 3, radius: 0.75, mass: 1.4, special: true, squadMax: 5, maxAlive: 12, debuffs: ['bleed'],
     desc: '成群狩猎，扑咬造成流血（移动时流血伤害 ×3），会直线飞扑。',

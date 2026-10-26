@@ -19,6 +19,7 @@ await page.waitForTimeout(300);
 await page.click('[data-act=camp]'); await page.waitForTimeout(300); await page.screenshot({ path: `${out}-talents.png` });
 await page.click('[data-tab=shop]'); await page.waitForTimeout(300); await page.screenshot({ path: `${out}-metashop.png` });
 await page.click('[data-tab=codex]'); await page.waitForTimeout(300); await page.screenshot({ path: `${out}-codex.png` });
+await page.click('[data-sub=enemies]'); await page.waitForTimeout(300); await page.evaluate(() => document.querySelector('.codex-item:nth-child(20)')?.scrollIntoView()); await page.screenshot({ path: `${out}-codex-enemies.png` });
 await page.click('.camp .back');
 await page.evaluate(() => window.__realmApi.startRun({ mode: 'adventure', hero: 'knight', difficulty: 'normal', chapter: 1 }));
 await page.waitForFunction(() => window.__realmApi.game?.status === 'map', null, { timeout: 60000 });

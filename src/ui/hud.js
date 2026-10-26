@@ -1,5 +1,6 @@
 import { h, skillIconHtml, itemIconHtml, esc, iconImg } from './dom.js';
-import { heroIconUrl, factionIconUrl, skillIconUrl, itemIconUrl, miscIconUrl } from './icons.js';
+import { heroIconUrl, factionIconUrl, skillIconUrl, itemIconUrl, miscIconUrl, debuffIconUrl } from './icons.js';
+import { DEBUFF } from '../game/content/debuffs.js';
 import { SKILL } from '../game/content/skills.js';
 import { ITEM } from '../game/content/items.js';
 import { FACTION, FACTIONS } from '../game/content/factions.js';
@@ -15,6 +16,7 @@ const BELT_KEYS = ['6', '7', '8', '9'];
 export function createHud(root, { project, onShop, onPause, touchMode = false }) {
   const el = h('div', { id: 'hud' });
   el.innerHTML = `
+  <div class="screenfx"><i class="fx-blind"></i><i class="fx-poison"></i><i class="fx-bleed"></i><i class="fx-frost"></i><i class="fx-fear"></i><i class="fx-confuse"></i><i class="fx-time"></i><i class="fx-hex"></i><i class="fx-tether"></i><i class="fx-bomb"></i></div>
   <div class="vignette"></div>
   <div class="tags-layer"></div>
   <div class="hud-top">
@@ -26,6 +28,7 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
         <div class="bar xp"><i></i></div>
       </div>
     </div>
+
     <div class="hud-center-top">
       <div class="objective panel"><span class="glyph"></span><span class="txt"></span><div class="bar prog"><i></i></div></div>
       <div class="boss-bar panel hidden"><div class="name"></div><div class="bar"><i></i></div><div class="phase"></div></div>
@@ -38,6 +41,8 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
   </div>
   <div class="hud-buttons pe"><button class="btn shopbtn">商店 <span class="kbd">B</span></button><button class="btn pausebtn">暂停 <span class="kbd">Esc</span></button></div>
   <div class="buffs"></div>
+  <div class="debuffs"></div>
+  <div class="gaze-meter hidden"><span>石化凝视</span><div class="bar"><i></i></div></div>
   <div class="factions"></div>
   <div class="combo hidden"><div class="n">0</div><div class="label">连击</div><div class="timer"><i></i></div></div>
   <div class="hud-bottom ${touchMode ? 'touchmode' : ''}">
@@ -45,7 +50,10 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     <div class="skillbar panel"></div>
     <div class="panel" style="display:grid;gap:6px;padding:6px"><div class="items"></div><div class="belt"></div></div>
   </div>
-  <div class="toast-stack"></div>`;
+  <div class="toast-stack"></div>
+  <div class="callouts"></div>
+  <div class="bomb-count hidden"></div>
+  <div class="cc-banner hidden"></div>`;
   root.append(el);
   const q = (s) => el.querySelector(s);
   q('.shopbtn').onclick = onShop; q('.pausebtn').onclick = onPause;
@@ -55,7 +63,76 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     boss: q('.boss-bar'), bossName: q('.boss-bar .name'), bossFill: q('.boss-bar .bar i'), bossPhase: q('.boss-bar .phase'), ko: q('.ko span'), koSub: q('.ko-counter .sub'), gold: q('.gold-chip span'),
     skillbar: q('.skillbar'), autobar: q('.autobar'), passivebar: q('.passivebar'), items: q('.items'), belt: q('.belt'), factions: q('.factions'), buffs: q('.buffs'),
     combo: q('.combo'), comboN: q('.combo .n'), comboT: q('.combo .timer i'), vignette: q('.vignette'), tags: q('.tags-layer'), toasts: q('.toast-stack'), minimap: q('#minimap'),
+    screenfx: q('.screenfx'), debuffs: q('.debuffs'), gaze: q('.gaze-meter'), gazeFill: q('.gaze-meter i'), callouts: q('.callouts'), bombCount: q('.bomb-count'), cc: q('.cc-banner'),
   };
+  // world-anchored text callouts (debuff names, 落空, 免疫, enemy cast names)
+  const callouts = [];
+  const lastCallout = new Map();
+  function callout(text, color, x, z, { y = 2.6, big = false, key = text, gap = 0.45, follow = null, life = 1.0 } = {}, game) {
+    const now = performance.now() / 1000;
+    if (now - (lastCallout.get(key) || -9) < gap) return;
+    lastCallout.set(key, now);
+    const d = h('div', { class: `callout ${big ? 'big' : ''}` }); d.textContent = text; d.style.color = color;
+    refs.callouts.append(d);
+    callouts.push({ el: d, x, z, y, t: 0, life, follow });
+    while (callouts.length > 24) callouts.shift().el.remove();
+  }
+  function updateCallouts(game, dt) {
+    const pos = {};
+    for (let i = callouts.length - 1; i >= 0; i--) {
+      const c = callouts[i]; c.t += dt;
+      if (c.t >= c.life) { c.el.remove(); callouts.splice(i, 1); continue; }
+      let x = c.x, z = c.z;
+      if (c.follow === 'player') { x = game.player.x; z = game.player.z; }
+      else if (c.follow != null) { const e = game.enemyById?.get(c.follow); if (e) { x = e.x; z = e.z; c.x = x; c.z = z; } }
+      project(x, c.y + c.t * 1.2, z, pos);
+      c.el.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%) scale(${c.t < 0.12 ? 0.6 + c.t * 3.4 : 1})`;
+      c.el.style.opacity = pos.visible ? Math.min(1, (c.life - c.t) * 4) : 0;
+    }
+  }
+  let lastDebuffKey = '';
+  function updateDebuffBar(game) {
+    const p = game.player, D = p.debuffs || {};
+    const list = Object.values(D).filter((d) => d.t > 0 && DEBUFF[d.id]);
+    const key = list.map((d) => d.id + d.stacks).join();
+    if (key !== lastDebuffKey) {
+      lastDebuffKey = key;
+      refs.debuffs.innerHTML = list.map((d) => { const def = DEBUFF[d.id]; return `<div class="debuff ${def.cc ? 'cc' : ''}" data-id="${d.id}" style='--c:${def.color};${iconImg(debuffIconUrl(d.id))}' title="${esc(`${def.name}：${def.desc}`)}"><i class="sweep"></i>${d.stacks > 1 ? `<b>${d.stacks}</b>` : ''}<span>${esc(def.name)}</span></div>`; }).join('');
+    }
+    refs.debuffs.querySelectorAll('.debuff').forEach((el) => { const d = D[el.dataset.id]; if (d) el.querySelector('.sweep').style.setProperty('--p', `${Math.min(1, d.t / Math.max(0.01, d.dur)) * 100}%`); });
+    const g = p.gaze || 0;
+    refs.gaze.classList.toggle('hidden', g <= 0.01);
+    refs.gazeFill.style.transform = `scaleX(${g})`;
+    // fuse countdown above the hero
+    const b = D.bomb;
+    refs.bombCount.classList.toggle('hidden', !(b?.t > 0) || p.dead);
+    if (b?.t > 0) { const pos = project(p.x, p.y + 3.4, p.z, {}); refs.bombCount.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%) scale(${1 + (1 - (b.t % 1)) * 0.25})`; refs.bombCount.textContent = Math.ceil(b.t); }
+    // crowd-control banner: what is happening and how to get out
+    const cc = list.find((d) => DEBUFF[d.id].cc) || (D.tether?.t > 0 ? D.tether : null) || (b?.t > 0 ? b : null);
+    refs.cc.classList.toggle('hidden', !cc);
+    if (cc) {
+      const tip = { fear: '恐惧中 · 无双可挣脱', hex: '妖术·变蛙 · 无双可挣脱', silence: '沉默 · 无法施放技能', petrify: '石化 · 受到伤害 -50%', freeze: '冰冻 · 无双可挣脱', root: '被缚 · 无法移动', confuse: '迷乱 · 方向颠倒', hooked: '被钩锁拖拽', tether: '噬魂链接 · 远离怨灵 11 米挣脱', bomb: '定时炸弹 · 爆炸瞬间闪避可规避' }[cc.id] || DEBUFF[cc.id].name;
+      if (refs.cc.dataset.id !== cc.id) { refs.cc.dataset.id = cc.id; refs.cc.textContent = tip; refs.cc.style.setProperty('--c', DEBUFF[cc.id].color); }
+    } else refs.cc.dataset.id = '';
+    // full-screen debuff overlays (cheap CSS layers, work on every quality level)
+    const has = (id) => (D[id]?.t || 0) > 0, stk = (id) => (has(id) ? D[id].stacks : 0);
+    const fx = refs.screenfx.style;
+    fx.setProperty('--blind', has('blind') ? Math.min(1, D.blind.t * 3) : 0);
+    fx.setProperty('--poison', Math.min(1, stk('poison') / 6));
+    fx.setProperty('--bleed', Math.min(1, stk('bleed') / 4));
+    fx.setProperty('--frost', has('freeze') ? 1 : Math.min(0.8, stk('frostbite') / 5));
+    fx.setProperty('--fear', has('fear') ? 1 : 0);
+    fx.setProperty('--confuse', has('confuse') ? 1 : 0);
+    fx.setProperty('--time', has('timeslow') ? 1 : 0);
+    fx.setProperty('--hex', has('hex') ? 1 : 0);
+    fx.setProperty('--tether', has('tether') ? 1 : 0);
+    fx.setProperty('--bomb', b?.t > 0 ? Math.max(0, 1 - b.t / 4) : 0);
+    document.body.classList.toggle('petrified', has('petrify'));
+    // skill slots locked while silenced / hexed / feared / stunned
+    const locked = p.mods?.noCast || p.mods?.stunned;
+    refs.skillbar.classList.toggle('locked', !!locked);
+    refs.items.classList.toggle('locked', !!locked);
+  }
   const mm = refs.minimap.getContext('2d');
   let lastSkillsKey = '', lastItemsKey = '', lastFactionKey = '', lastCombo = 0, hurtT = 0, musouT = 0;
   const tagPool = [];
@@ -148,7 +225,7 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
 
   return {
     el,
-    reset() { lastSkillsKey = ''; lastItemsKey = ''; lastFactionKey = ''; refs.toasts.innerHTML = ''; },
+    reset() { lastSkillsKey = ''; lastItemsKey = ''; lastFactionKey = ''; lastDebuffKey = ''; refs.toasts.innerHTML = ''; for (const c of callouts) c.el.remove(); callouts.length = 0; },
     update(game, dt) {
       const p = game.player, st = game.stats;
       if (!st) return;
@@ -222,6 +299,8 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
       drawMinimap(game);
       updateTags(game);
       updateArrows(game);
+      updateDebuffBar(game);
+      updateCallouts(game, dt);
       // events -> announcements
       for (const ev of game.events) {
         switch (ev.type) {
@@ -240,6 +319,17 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
           case 'officerSpawn': this.toast(`<b style="color:#ffb030">敌将出现：</b>${esc(ev.name)}`); break;
           case 'wave': this.banner(`第 ${ev.wave} 波`, '敌人更强了', 'danger'); break;
           case 'synergy': break;
+          case 'debuff': { const def = DEBUFF[ev.id]; if (!def) break; callout(def.max ? `${def.name} ×${ev.stacks}` : `${def.name}！`, def.color, p.x, p.z, { follow: 'player', big: ev.fresh && !!def.cc, key: `d:${ev.id}`, gap: def.max ? 0.35 : 0.8 }, game); break; }
+          case 'debuffResist': callout('免疫', '#ffe7a0', p.x, p.z, { follow: 'player', key: 'resist', gap: 0.6 }, game); break;
+          case 'cleanse': callout('净化', '#ffffff', p.x, p.z, { follow: 'player', big: true, key: 'cleanse' }, game); break;
+          case 'actionBlocked': callout({ cast: '沉默中', item: '无法使用', dodge: '无法闪避', attack: '无法攻击', stun: '无法行动' }[ev.what] || '无法行动', '#c8c0e0', p.x, p.z, { follow: 'player', key: `blk:${ev.what}`, gap: 0.6, y: 3 }, game); break;
+          case 'miss': callout('落空', '#9a9ab8', ev.x, ev.z, { y: 1.8, key: 'miss', gap: 0.2, life: 0.7 }, game); break;
+          case 'evade': callout('闪避', '#c8f4ff', p.x, p.z, { follow: 'player', key: 'evade', gap: 0.3, life: 0.7 }, game); break;
+          case 'guardBreak': callout('破防！', '#8fe3ff', ev.x, ev.z, { y: 2.6, key: `gb${Math.round(ev.x)}${Math.round(ev.z)}`, gap: 0.3, life: 0.8 }, game); break;
+          case 'tetherBreak': callout('挣脱链接', '#4affd8', p.x, p.z, { follow: 'player', big: true, key: 'tb' }, game); break;
+          case 'dispel': callout('增益被驱散', '#c27aff', p.x, p.z, { follow: 'player', big: true, key: 'dispel' }, game); break;
+          case 'petrified': this.flashText('cc-flash', '石化！'); break;
+          case 'enemyCast': callout(ev.name, '#ffb38a', ev.x, ev.z, { follow: ev.id, y: 3.1, key: `c${ev.id}`, gap: 1, life: 1.1 }, game); break;
           default: break;
         }
       }
