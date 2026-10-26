@@ -10,6 +10,7 @@ import { createVfx } from './vfx.js';
 import { createEntities } from './entities.js';
 import { createNumbers } from './numbers.js';
 import { createHeroFx } from './hero-fx.js';
+import { createGradePass } from './grade.js';
 import { col, pal } from './vfx-core.js';
 import { DEBUFF } from '../game/content/debuffs.js';
 
@@ -37,14 +38,14 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
   const entities = createEntities(scene, vfx);
   const numbers = createNumbers(scene);
   const heroFx = createHeroFx(scene, vfx);
-  let composer = null, bloom = null;
-  if (Q.bloom) {
-    composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.5, 0.5, 0.86);
-    composer.addPass(bloom);
-    composer.addPass(new OutputPass());
-  }
+  // post: bloom (medium/high) -> tone map -> colour grade. Low quality keeps the grade but skips bloom.
+  const composer = new EffectComposer(renderer);
+  let bloom = null;
+  composer.addPass(new RenderPass(scene, camera));
+  if (Q.bloom) { bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.5, 0.5, 0.86); composer.addPass(bloom); }
+  composer.addPass(new OutputPass());
+  const grade = createGradePass();
+  composer.addPass(grade.pass);
   const cam = { x: 0, z: 0, dist: 19, trauma: 0, fovKick: 0, zoom: 1, targetZoom: 1, lookY: 1 };
   const tmpV = new THREE.Vector3();
   let width = 1, height = 1, frameAvg = 16, lastAdapt = 0;
@@ -55,7 +56,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
     camera.aspect = width / height;
     camera.fov = width < height ? 58 : 42;
     camera.updateProjectionMatrix();
-    composer?.setSize(width, height);
+    composer.setSize(width, height);
     bloom?.setSize(width * 0.5, height * 0.5);
   }
   resize();
@@ -88,6 +89,8 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
         }
         case 'kill': {
           const big = ev.elite || ev.boss;
+          const sc = ev.model && stainOf(ev.model);
+          if (sc) vfx.stain(ev.x, ev.z, big ? 2.2 : 1.1 + Math.random() * 0.4, sc, big ? 9 : 6, 0);
           vfx.burst(ev.x, 1, ev.z, { core: col('#ffffff'), main: col('#f0e6d0'), dark: col('#6a5a4a') }, { count: big ? 26 : 8, speed: big ? 9 : 6, up: 6, size: 0.28, life: 0.7, gravity: 20, shape: 7 });
           vfx.burst(ev.x, 1, ev.z, pal2('soul'), { count: big ? 14 : 3, speed: 1.5, up: 4, size: 0.45, life: 0.9, gravity: -1, shape: 0 });
           if (big) { vfx.shock(ev.x, 0.3, ev.z, 4, pal2('holy'), 0.5); vfx.flash(ev.x, 1.5, ev.z, pal2('holy'), 40, 0.3, 12); }
@@ -120,6 +123,24 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
       }
     }
   }
+  // dirt erupting where enemies claw out of the ground, and short-lived stains where they fall
+  const spawned = new WeakSet();
+  function spawnBursts(game) {
+    let n = 0;
+    for (const e of game.enemies) {
+      if (e.state !== 'spawn' || spawned.has(e) || e.boss) continue;
+      spawned.add(e);
+      if (e.def.archetype === 'flyer' || e.def.fly || ++n > 6) continue;
+      const r = e.radius * (e.scale > 1.4 ? 1.6 : 1.1);
+      vfx.burst(e.x, 0.2, e.z, DIRT, { count: 7 + Math.round(r * 4), speed: 2.5 + r, up: 6, size: 0.24, gravity: 22, shape: 7, life: 0.7 });
+      vfx.smokePuff(e.x, 0.3, e.z, DIRT.main.clone().multiplyScalar(0.55), { count: 2, size: 0.9 + r * 0.6, speed: 1.2, up: 0.4, life: 0.8 });
+      vfx.stain(e.x, e.z, r * 1.5, STAIN.dirt, 2.4, 6);
+    }
+  }
+  const DIRT = { core: col('#a08a6a'), main: col('#6a5440'), dark: col('#2a2018'), shape: 7 };
+  const STAIN = { dirt: col('#1e1810'), bone: col('#2a2622'), slime: col('#1c4a10'), acid: col('#4a6000'), scorch: col('#1a0a04'), ichor: col('#183a10'), blood: col('#4a0a10'), stone: col('#262428'), void: col('#2a0a30') };
+  const stainOf = (model) => /slime/.test(model) ? (model === 'acid_slime' ? STAIN.acid : STAIN.slime) : /lava|hellfire|ember|bomber/.test(model) ? STAIN.scorch : /spider/.test(model) ? STAIN.ichor
+    : /wolf|bat|berserker/.test(model) ? STAIN.blood : /gargoyle|basilisk|giant/.test(model) ? STAIN.stone : /wraith|banshee/.test(model) ? null : /shadow|null|hex|time/.test(model) ? STAIN.void : STAIN.bone;
   const pal2 = (name) => { const pp = pal(name === 'soul' ? 'shadow' : name || 'arcane'); return { core: col(pp.core), main: col(name === 'soul' ? '#9ad8ff' : pp.main), dark: col(pp.dark), shape: 0 }; };
   const castCircles = [];
   // objective markers (capture points, defend crystal, escape portal)
@@ -179,7 +200,7 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
   let lastBiomeKey = '';
   const api = {
     shake: 1,
-    renderer, scene, camera, vfx, crowd, units, numbers, arena,
+    renderer, scene, camera, vfx, crowd, units, numbers, arena, composer,
     async prepare(game, models) {
       await arena.setBiome(game);
       await crowd.prepare(models);
@@ -188,10 +209,11 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
     resetForStage(game) { adaptFrom = performance.now() + 4000; for (const [, m] of markerMeshes) vfx.pool.release(m); markerMeshes.clear(); vfx.clear(); numbers.clear(); units.reset(); cam.x = game.player.x; cam.z = game.player.z; cam.targetZoom = 1; cam.zoom = 1; },
     frame(game, dt, rawMs) {
       const key = `${game.stageIndex}-${game.biomeId}-${game.obstacles.length}`;
-      if (key !== lastBiomeKey) { lastBiomeKey = key; arena.setBiome(game); }
+      if (key !== lastBiomeKey) { lastBiomeKey = key; arena.setBiome(game); grade.setBiome(game.biomeId); }
       vfx.begin();
       handleEvents(game);
       crowd.sync(game, dt);
+      spawnBursts(game);
       units.sync(game, dt);
       vfx.sync(game, dt);
       heroFx.sync(game, dt);
@@ -203,7 +225,8 @@ export function createRenderer(canvas, assets, { quality = 'high', onFrameStats 
       numbers.update(dt);
       arena.update(game, dt, camera);
       updateCamera(game, dt);
-      if (composer) composer.render(); else renderer.render(scene, camera);
+      grade.update(game.time, dt, { trauma: cam.trauma, aspect: width / height });
+      composer.render();
       if (rawMs) adapt(rawMs);
     },
     /** World -> CSS pixel position for DOM overlays. */

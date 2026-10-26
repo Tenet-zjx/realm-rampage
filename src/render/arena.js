@@ -1,36 +1,9 @@
 import * as THREE from 'three';
+import { groundMaps } from './ground.js';
+import { createScatter, patchSeeThrough, seeThrough } from './scatter.js';
 
-// Arena environment: procedural ground, instanced KayKit props, biome lighting/fog, ambient particles, objective markers.
-function groundTexture(colors, seed = 1) {
-  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
-  const g = c.getContext('2d');
-  g.fillStyle = colors[0]; g.fillRect(0, 0, S, S);
-  let s = seed;
-  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  // flagstones
-  const tile = 64;
-  for (let y = 0; y < S; y += tile) for (let x = 0; x < S; x += tile) {
-    const off = (y / tile) % 2 ? tile / 2 : 0;
-    g.fillStyle = rnd() < 0.5 ? colors[1] : colors[2];
-    g.globalAlpha = 0.16 + rnd() * 0.16;
-    g.fillRect(((x + off) % S) + 2, y + 2, tile - 4, tile - 4);
-  }
-  g.globalAlpha = 1;
-  // large soft patches to break the tiling
-  for (let i = 0; i < 40; i++) { const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1); const x = rnd() * S, y = rnd() * S, r = 30 + rnd() * 90; g.save(); g.translate(x, y); g.scale(r, r); gr.addColorStop(0, rnd() < 0.5 ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.06)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(-1, -1, 2, 2); g.restore(); }
-  // grime and speckles
-  for (let i = 0; i < 2600; i++) {
-    g.fillStyle = rnd() < 0.5 ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.05)';
-    const r = 1 + rnd() * 5; g.beginPath(); g.arc(rnd() * S, rnd() * S, r, 0, Math.PI * 2); g.fill();
-  }
-  // cracks
-  g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 1.5;
-  for (let i = 0; i < 40; i++) { g.beginPath(); let x = rnd() * S, y = rnd() * S; g.moveTo(x, y); for (let k = 0; k < 5; k++) { x += (rnd() - 0.5) * 40; y += (rnd() - 0.5) * 40; g.lineTo(x, y); } g.stroke(); }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-  return t;
-}
-
+// Arena environment: procedural biome ground (ground.js), instanced KayKit props (see-through when they hide the hero),
+// ground scatter, biome lighting/fog, a hero fill light and ambient particles.
 const AMBIENT = {
   motes: { color: 0xb8ffcc, size: 0.12, speed: 0.4, rise: 0.3, count: 260 },
   snow: { color: 0xffffff, size: 0.14, speed: 0.6, rise: -1.4, count: 520 },
@@ -47,7 +20,11 @@ export function createArena(scene, assets, renderer) {
   sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.04;
   Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 80 });
   scene.add(sun); scene.add(sun.target);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, emissive: 0xffffff, emissiveIntensity: 0 }));
+  const scatter = createScatter(root);
+  // warm fill light riding with the hero so the player always reads against the ground
+  const heroLight = new THREE.PointLight(0xffe2b8, 7, 11, 2); scene.add(heroLight);
+  let glowPulse = false;
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
   const outer = new THREE.Mesh(new THREE.RingGeometry(1, 3, 64, 1), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.55, depthWrite: false }));
   outer.rotation.x = -Math.PI / 2; outer.position.y = 0.02; root.add(outer);
@@ -65,7 +42,7 @@ export function createArena(scene, assets, renderer) {
       const parts = [];
       node.updateMatrixWorld(true);
       const inv = new THREE.Matrix4().copy(node.matrixWorld).invert();
-      node.traverse((o) => { if (o.isMesh) { const m = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld); parts.push({ geometry: o.geometry, material: o.material, matrix: m }); } });
+      node.traverse((o) => { if (o.isMesh) { const m = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld); patchSeeThrough(o.material); parts.push({ geometry: o.geometry, material: o.material, matrix: m }); } });
       propLib.set(node.name.replace(/\.\d+$/, ''), parts);
     }
     return propLib;
@@ -117,20 +94,29 @@ export function createArena(scene, assets, renderer) {
         scene.fog = new THREE.Fog(b.fog, 26 + b.fogNear * 0.4, 58 + b.fogFar * 0.45);
         hemi.color.set(b.light); hemi.groundColor.set(b.ground[1]); hemi.intensity = 1.0;
         sun.color.set(b.sun); sun.intensity = 2.2;
-        const tex = groundTexture(b.ground, game.seed % 997 + 3);
-        ground.material.map?.dispose(); ground.material.map = tex; ground.material.needsUpdate = true;
+        const maps = groundMaps(game.biomeId, b.ground, game.seed % 997 + 3);
+        const gm = ground.material;
+        gm.map?.dispose(); gm.normalMap?.dispose(); gm.emissiveMap?.dispose();
+        gm.map = maps.map; gm.normalMap = maps.normalMap; gm.normalScale.set(1.15, 1.15); gm.emissiveMap = maps.emissiveMap;
+        gm.emissiveIntensity = maps.emissiveMap ? 1 : 0; gm.needsUpdate = true; glowPulse = maps.glowPulse; ground.userData.meters = maps.meters;
+        heroLight.color.set(b.light).lerp(new THREE.Color(0xffe2b8), 0.6);
         setAmbient(b.ambient);
       }
       const half = game.arena.half;
       ground.scale.set(half * 2 + 70, half * 2 + 70, 1);
-      ground.material.map.repeat.set((half * 2 + 70) / 8, (half * 2 + 70) / 8);
+      const rep = (half * 2 + 70) / (ground.userData.meters || 14);
+      for (const t of [ground.material.map, ground.material.normalMap, ground.material.emissiveMap]) t?.repeat.set(rep, rep);
       outer.scale.set(half * 1.42, half * 1.42, 1);
       const key = `${game.stageIndex}-${game.biomeId}-${game.obstacles.length}`;
-      if (key !== layoutKey) { layoutKey = key; buildProps(game); }
+      if (key !== layoutKey) { layoutKey = key; buildProps(game); scatter.build(game); }
     },
     update(game, dt, camera) {
       const p = game.player;
       sun.position.set(p.x + 14, 28, p.z + 10); sun.target.position.set(p.x, 0, p.z);
+      heroLight.position.set(p.x - 1.5, 4.2, p.z + 2.5);
+      seeThrough.uSeeCam.value.copy(camera.position); seeThrough.uSeeHero.value.set(p.x, 1.1, p.z);
+      scatter.update(game.time);
+      if (glowPulse) ground.material.emissiveIntensity = 0.9 + Math.sin(game.time * 1.6) * 0.22 + Math.sin(game.time * 4.3) * 0.06;
       if (ambient) {
         const { pos, seed, A } = ambient, n = A.count;
         for (let i = 0; i < n; i++) {

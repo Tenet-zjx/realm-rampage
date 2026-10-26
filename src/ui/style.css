@@ -113,7 +113,8 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .buff i { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold); transform-origin: left; }
 
 /* debuffs (v1.1): bar under the hero, gaze meter, crowd-control banner, world callouts, bomb fuse */
-.debuffs { position: absolute; left: 50%; top: calc(50% + 74px); transform: translateX(-50%); display: flex; gap: 6px; pointer-events: auto; }
+.debuffs { position: absolute; left: 50%; top: calc(50% + 74px); transform: translateX(-50%); display: flex; gap: 6px; pointer-events: auto; z-index: 3; }
+.gaze-meter, .cc-banner { z-index: 3; }
 .debuff { width: 34px; height: 34px; border-radius: 8px; background-size: cover; border: 2px solid var(--c); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent), 0 2px 6px #000; position: relative; animation: debuffIn 0.3s ease-out; }
 .debuff.cc { border-radius: 50%; animation: debuffIn 0.3s ease-out, ccPulse 0.8s ease-in-out infinite; }
 .debuff .sweep { position: absolute; inset: 0; border-radius: inherit; background: conic-gradient(transparent calc(var(--p, 100%)), rgba(0, 0, 0, 0.62) 0); }
@@ -152,8 +153,8 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 @keyframes fxSpin { to { transform: rotate(360deg); } }
 body.petrified #scene { filter: grayscale(0.85) sepia(0.25) contrast(1.05); transition: filter 0.2s; }
 @media (max-height: 520px) {
-  .debuffs { top: calc(50% + 52px); gap: 4px; } .debuff { width: 26px; height: 26px; } .debuff span { display: none; }
-  .gaze-meter { top: calc(50% + 86px); } .cc-banner { top: calc(50% + 104px); font-size: 11px; padding: 2px 10px; }
+  .debuffs { top: calc(50% + 36px); gap: 4px; } .debuff { width: 26px; height: 26px; } .debuff span { display: none; }
+  .gaze-meter { top: calc(50% + 68px); } .gaze-meter .bar { width: 110px; } .cc-banner { top: calc(50% + 86px); font-size: 11px; padding: 2px 10px; }
   .callout { font-size: 13px; } .callout.big { font-size: 17px; } .bomb-count { font-size: 26px; }
 }
 

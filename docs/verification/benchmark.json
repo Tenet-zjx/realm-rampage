@@ -1,20 +1,20 @@
 {
- "date": "2026-10-19T13:19:46.769Z",
+ "date": "2026-10-26T06:06:14.957Z",
  "env": "headless Google Chrome (ANGLE/Metal) on the dev Mac",
- "enemies": 371,
- "frames": 600,
- "avgMs": 8.21,
- "p50": 7.1,
- "p95": 13.9,
- "fps": 121.7,
+ "enemies": 383,
+ "frames": 720,
+ "avgMs": 14.05,
+ "p50": 12.6,
+ "p95": 31.2,
+ "fps": 71.2,
  "renderer": {
-  "particles": 5510,
-  "smoke": 0,
-  "handles": 20,
-  "meshes": 25,
+  "particles": 6000,
+  "smoke": 32,
+  "handles": 30,
+  "meshes": 26,
   "pixelRatio": 1,
-  "frameMs": 8.2,
-  "programs": 30,
-  "geometries": 58
+  "frameMs": 14.2,
+  "programs": 33,
+  "geometries": 78
  }
 }

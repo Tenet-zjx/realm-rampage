@@ -91,6 +91,7 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     }
   }
   let lastDebuffKey = '';
+  const fxState = {};
   function updateDebuffBar(game) {
     const p = game.player, D = p.debuffs || {};
     const list = Object.values(D).filter((d) => d.t > 0 && DEBUFF[d.id]);
@@ -117,17 +118,18 @@ export function createHud(root, { project, onShop, onPause, touchMode = false })
     // full-screen debuff overlays (cheap CSS layers, work on every quality level)
     const has = (id) => (D[id]?.t || 0) > 0, stk = (id) => (has(id) ? D[id].stacks : 0);
     const fx = refs.screenfx.style;
-    fx.setProperty('--blind', has('blind') ? Math.min(1, D.blind.t * 3) : 0);
-    fx.setProperty('--poison', Math.min(1, stk('poison') / 6));
-    fx.setProperty('--bleed', Math.min(1, stk('bleed') / 4));
-    fx.setProperty('--frost', has('freeze') ? 1 : Math.min(0.8, stk('frostbite') / 5));
-    fx.setProperty('--fear', has('fear') ? 1 : 0);
-    fx.setProperty('--confuse', has('confuse') ? 1 : 0);
-    fx.setProperty('--time', has('timeslow') ? 1 : 0);
-    fx.setProperty('--hex', has('hex') ? 1 : 0);
-    fx.setProperty('--tether', has('tether') ? 1 : 0);
-    fx.setProperty('--bomb', b?.t > 0 ? Math.max(0, 1 - b.t / 4) : 0);
-    document.body.classList.toggle('petrified', has('petrify'));
+    const setFx = (k, v) => { v = Math.round(v * 50) / 50; if (fxState[k] !== v) { fxState[k] = v; fx.setProperty(`--${k}`, v); } };
+    setFx('blind', has('blind') ? Math.min(1, D.blind.t * 3) : 0);
+    setFx('poison', Math.min(1, stk('poison') / 6));
+    setFx('bleed', Math.min(1, stk('bleed') / 4));
+    setFx('frost', has('freeze') ? 1 : Math.min(0.8, stk('frostbite') / 5));
+    setFx('fear', has('fear') ? 1 : 0);
+    setFx('confuse', has('confuse') ? 1 : 0);
+    setFx('time', has('timeslow') ? 1 : 0);
+    setFx('hex', has('hex') ? 1 : 0);
+    setFx('tether', has('tether') ? 1 : 0);
+    setFx('bomb', b?.t > 0 ? Math.max(0, 1 - b.t / 4) : 0);
+    const stone = has('petrify'); if (fxState.stone !== stone) { fxState.stone = stone; document.body.classList.toggle('petrified', stone); }
     // skill slots locked while silenced / hexed / feared / stunned
     const locked = p.mods?.noCast || p.mods?.stunned;
     refs.skillbar.classList.toggle('locked', !!locked);

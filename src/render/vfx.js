@@ -490,6 +490,7 @@ export function createVfx(scene, { quality = 'high' } = {}) {
   const streaks = [];
   function decalOnce(f, pp, { type = 0, life = 1, r = 2, alpha = 0.6, dark = false, spin = 0 } = {}) { decalOnces.push({ x: f.x, z: f.z, type, life, max: life, r, alpha, dark, pp, spin, t: 0 }); }
   const decalOnces = [];
+  const stains = [];
   function telegraphFriendly(f, pp, d) { decalOnces.push({ x: f.x, z: f.z, type: 5, life: d, max: d, r: f.r || 2, alpha: 0.85, dark: false, pp, spin: 0.6, t: 0, fill: true }); }
   function runeTelegraph(f, pp, d) { telegraphFriendly(f, pp, d); }
   function ringWave(f, pp, o = {}) { /* drawn by ringHandle while alive */ }
@@ -552,14 +553,20 @@ export function createVfx(scene, { quality = 'high' } = {}) {
       for (let i = arcs.length - 1; i >= 0; i--) { const a = arcs[i]; a.life -= dt; if (a.life <= 0) { arcs.splice(i, 1); continue; } const k = a.life / a.max; bolts.bolt(a.ax, a.ay, a.az, a.bx, a.by, a.bz, a.pp.main, k, a.width * 1.6, a.jag, a.segs); bolts.bolt(a.ax, a.ay, a.az, a.bx, a.by, a.bz, a.pp.core, k, a.width * 0.6, a.jag, a.segs); }
       for (let i = streaks.length - 1; i >= 0; i--) { const s = streaks[i]; s.life -= dt; if (s.life <= 0) { streaks.splice(i, 1); continue; } const k = s.life / s.max; decalsAdd.push(s.x, 0.07, s.z, s.ang, s.width, s.L, s.pp.main, k, 3, 0, 0, 0.6, 0, 0, 1, 0); }
       for (let i = decalOnces.length - 1; i >= 0; i--) { const d = decalOnces[i]; d.life -= dt; d.t += dt; if (d.life <= 0) { decalOnces.splice(i, 1); continue; } const k = d.life / d.max; (d.dark ? decalsDark : decalsAdd).push(d.x, 0.045, d.z, d.spin * d.t * 2, d.r * 2, d.r * 2, d.dark ? d.pp.dark.clone().multiplyScalar(0.3) : d.pp.main, d.alpha * Math.min(1, k * 2), d.type, 0.8, 0, 0.12, d.fill ? Math.max(0.01, 1 - k) : 0, d.t, 1, d.spin); }
+      for (let i = stains.length - 1; i >= 0; i--) { const st = stains[i]; st.life -= dt; if (st.life <= 0) { stains.splice(i, 1); continue; } const k = Math.min(1, st.life / st.max * 3) * Math.min(1, (st.max - st.life) * 8); decalsDark.push(st.x, 0.035, st.z, st.rot, st.r * 2, st.r * 2, st.color, 0.55 * k, st.type, 0.8, 0, 0.35, 0, 0, 1, 0); }
       for (let i = trails.length - 1; i >= 0; i--) { const tr = trails[i]; tr.t += dt; if (tr.t >= tr.dur) { trails.splice(i, 1); continue; } }
       parts.update(dt); smoke.update(dt); lights.update(dt); pool.tick(t);
     },
     /** Decals and lightning are immediate-mode: everything pushed between begin() and end() draws this frame. */
     begin() { decalsAdd.begin(); decalsDark.begin(); bolts.begin(); },
     end() { decalsAdd.end(); decalsDark.end(); bolts.end(); },
+    /** Ground stain (corpse, scorch, dirt): a darkening decal that fades out; capped so old ones recycle. */
+    stain(x, z, r, color, life = 6, type = 0) {
+      if (stains.length > 140) stains.shift();
+      stains.push({ x, z, r, color, life, max: life, type, rot: Math.random() * TAU });
+    },
     burst, smokePuff, shock, flash, slash, sphere, pillar, streak, arc: (...a) => arc(...a), P, parts, decalsAdd, decalsDark, bolts, pool, lights,
-    clear() { for (const [, h] of handles) h.dispose(); handles.clear(); parts.clear(); smoke.clear(); for (const tr of transient) pool.release(tr.m); transient.length = 0; timers.length = 0; arcs.length = 0; streaks.length = 0; decalOnces.length = 0; },
+    clear() { for (const [, h] of handles) h.dispose(); handles.clear(); parts.clear(); smoke.clear(); for (const tr of transient) pool.release(tr.m); transient.length = 0; timers.length = 0; arcs.length = 0; streaks.length = 0; decalOnces.length = 0; stains.length = 0; },
     stats: () => ({ particles: parts.count, smoke: smoke.count, handles: handles.size, meshes: pool.live.size }),
   };
 }
